@@ -100,6 +100,16 @@ button:disabled { opacity: .45; cursor: default; border-color: var(--line); }
 .aff.small { font-size: 12px; padding: 4px 8px; margin-top: 6px; }
 .aff a { color: var(--sun); }
 .afflinks { display: flex; flex-direction: column; gap: 4px; flex-basis: 100%; }
+.affcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; flex-basis: 100%; }
+.aff a.affcard { display: flex; gap: 10px; align-items: center; padding: 8px; border: 2px solid var(--line); border-radius: 8px; background: #0f1830; color: var(--ink); text-decoration: none; }
+.aff a.affcard:hover, .aff a.affcard:focus-visible { border-color: var(--sun); }
+.affpic { flex: none; width: 72px; height: 56px; border-radius: 6px; display: grid; place-items: center; background: linear-gradient(#3a5a9a, #7fb0e0 70%, #6fa35c 70%); font-family: var(--pixel); font-size: 15px; color: #fff; text-shadow: 0 1px 0 #1b2440; }
+.affpic span { animation: affbob 2.4s ease-in-out infinite; display: inline-block; }
+@keyframes affbob { 50% { transform: translateY(-4px); } }
+.affinfo { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.affinfo b { font-weight: 400; font-family: var(--pixel); }
+.affinfo small { color: var(--ink-dim); font-size: 12px; }
+.affbtn { align-self: flex-start; margin-top: 2px; padding: 3px 10px; border-radius: 6px; background: var(--sun); color: #1b1408; font-size: 13px; }
 .adtag { font-size: 11px; border: 1px solid var(--ink-dim); color: var(--ink-dim); border-radius: 4px; padding: 0 5px; }
 .ad { border: 2px dashed var(--line); border-radius: 8px; padding: 22px 12px; text-align: center; color: var(--ink-dim); font-size: 13px; }
 ul.note { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -201,7 +211,7 @@ ul.rec li.done { color: inherit; }
 <script>
 const CHECKED = '2026年10月17日';
 // ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
-const VERSION = 'v1.3.0', VERSION_DATE = '2026年10月20日';
+const VERSION = 'v1.3.1', VERSION_DATE = '2026年10月20日';
 
 /* ---------- BGM ----------
    場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
@@ -288,8 +298,9 @@ const WORRIES = {
 const AFF_SHOW_EMPTY = false;
 const AFFILIATE = {
   toy: { title: '室内練習におすすめの機体（100g未満）', links: [
-    { label: 'おすすめの室内練習機 1', url: 'https://link.amazon/B003Cnr8V' },
-    { label: 'おすすめの室内練習機 2', url: 'https://link.amazon/B08V9Txw1' }] },
+    // name＝商品名、point＝ひとことの特徴（空なら出ない）。Amazonの商品画像は規約で自分では置けないので、ゲームの絵を使う
+    { label: 'おすすめの室内練習機 1', name: '', point: '', url: 'https://link.amazon/B003Cnr8V' },
+    { label: 'おすすめの室内練習機 2', name: '', point: '', url: 'https://link.amazon/B08V9Txw1' }] },
   aerial: { title: '空撮用ドローン（100g以上・リモートID内蔵・技適マークあり）', url: '' },
   'プロペラガード': { title: 'お使いの機体に合うプロペラガード', url: '' },
   '予備バッテリー': { title: 'お使いの機体の純正バッテリー', url: '' },
@@ -300,7 +311,10 @@ function affCard(key, small) {
   const a = AFFILIATE[key]; if (!a) return null;
   const links = a.links || (a.url ? [{ label: a.title + ' を見る', url: a.url }] : []);
   if (!links.length && !AFF_SHOW_EMPTY) return null;
-  const body = links.length ? el('div', { class: 'afflinks' }, ...links.map((l) => el('a', { href: l.url, target: '_blank', rel: 'sponsored noopener' }, l.label + '（Amazon）')))
+  const body = links.length && a.links && !small ? el('div', { class: 'affcards' }, ...links.map((l, i) => el('a', { class: 'affcard', href: l.url, target: '_blank', rel: 'sponsored noopener' },
+      el('span', { class: 'affpic', 'aria-hidden': 'true' }, el('span', {}, ['-[■]-', '-{◆}-', '-(●)-'][i % 3])),
+      el('span', { class: 'affinfo' }, el('b', {}, l.name || l.label), l.point ? el('small', {}, l.point) : null, el('span', { class: 'affbtn' }, 'Amazonで見る ▶')))))
+    : links.length ? el('div', { class: 'afflinks' }, ...links.map((l) => el('a', { href: l.url, target: '_blank', rel: 'sponsored noopener' }, (l.name || l.label) + '（Amazon）')))
     : el('span', {}, a.title + '（リンク準備中）');
   return el('div', { class: 'aff' + (small ? ' small' : '') }, el('span', { class: 'adtag' }, '広告・PR'),
     small ? null : el('span', {}, links.length && a.links ? a.title + '：' : '実際に買うなら：'), body);
