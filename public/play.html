@@ -54,6 +54,7 @@ body {
 }
 * { box-sizing: border-box; }
 .app { max-width: 560px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; gap: 10px; }
+[hidden] { display: none !important; }
 .status { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 6px; font-family: var(--pixel); }
 .stat { background: var(--sky-2); border: 2px solid var(--line); border-radius: 6px; padding: 4px 8px; min-width: 0; }
 .stat small { display: block; color: var(--ink-dim); font-size: 11px; letter-spacing: .06em; line-height: 1.4; }
@@ -200,7 +201,7 @@ ul.rec li.done { color: inherit; }
 <script>
 const CHECKED = '2026年10月17日';
 // ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
-const VERSION = 'v1.2.0', VERSION_DATE = '2026年10月20日';
+const VERSION = 'v1.3.0', VERSION_DATE = '2026年10月20日';
 
 /* ---------- BGM ----------
    場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
@@ -229,6 +230,7 @@ function updateBgm() {
   if (audio.unlocked) audio.el.play().catch(() => {});
 }
 window.addEventListener('pointerdown', () => { if (!audio.unlocked) { audio.unlocked = true; if (audio.cur) audio.el?.play().catch(() => {}); } }, { capture: true });
+const HOME_URL = 'https://jtag-works.jp/'; // JTAGのホームページ
 const MLIT = 'https://www.mlit.go.jp/koku/koku_tk10_000003.html';
 
 /* ---------- 悩みノート ---------- */
@@ -1139,16 +1141,16 @@ function noticeBox() {
 }
 
 function viewTitle() {
-  const hasSave = S.cleared >= 0;
+  const hasSave = S.cleared >= 0 || S.inCh != null || !!S._resume;
   scene.append(
     el('div', { class: 'title-art', 'aria-hidden': 'true' }, el('div', { class: 'drone' }, '-[■]-'), el('div', { class: 'town' })),
     el('p', { class: 'place' }, 'DRONE RPG'),
     el('h1', {}, 'はじめてのフライト'),
     el('p', {}, '街でドローンを見かけたあなた。買う前の悩みから初フライトまで、ひとつずつ解決していこう。'),
     el('div', { class: 'choices' },
-      hasSave ? el('button', { type: 'button', class: 'primary', onclick: () => setScreen('map') }, 'つづきから') : null,
-      el('button', { type: 'button', class: hasSave ? '' : 'primary', onclick: () => { S = structuredClone(START); setScreen('notice'); } }, 'はじめから')),
-    el('p', { class: 'small', style: 'text-align:center;color:var(--ink-dim)' }, VERSION),
+      hasSave ? el('button', { type: 'button', class: 'primary', onclick: () => { const r = S._resume || 'map'; S._resume = null; setScreen(r); } }, 'つづきから') : null,
+      el('button', { type: 'button', class: hasSave ? '' : 'primary', onclick: (e) => { if (hasSave && !e.currentTarget.dataset.armed) { e.currentTarget.dataset.armed = '1'; e.currentTarget.textContent = 'もう一度押すと、セーブを消して最初から'; return; } S = structuredClone(START); setScreen('notice'); } }, 'はじめから')),
+    el('p', { class: 'small', style: 'text-align:center;color:var(--ink-dim)' }, VERSION, '　', el('a', { href: HOME_URL, target: '_blank', rel: 'noopener' }, 'JTAGのホームページ')),
   );
 }
 
@@ -2228,6 +2230,8 @@ function viewAbout() {
     el('button', { type: 'button', onclick: () => { S.sound = S.sound === false; save(); updateBgm(); viewAbout(); } }, S.sound === false ? '🔇 BGM：オフ（押すとオン）' : '🔊 BGM：オン（押すとオフ）'),
     el('button', { type: 'button', onclick: () => setScreen('chapters') }, '章をえらんで、もう一度確認する'),
     el('button', { type: 'button', onclick: () => setScreen('report') }, '不具合・まちがいを報告する'),
+    el('button', { type: 'button', onclick: () => { S._resume = S._return && !['title', 'notice'].includes(S._return) ? S._return : 'map'; setScreen('title'); } }, 'タイトル画面に戻る（セーブはそのまま）'),
+    el('p', { class: 'small' }, el('a', { href: HOME_URL, target: '_blank', rel: 'noopener' }, 'JTAGのホームページ（ドローン空撮）を開く'), '（別のタブで開きます）'),
     el('button', { type: 'button', onclick: () => { if (confirmReset.armed) { S = structuredClone(START); confirmReset.armed = false; setScreen('title'); } else { confirmReset.armed = true; confirmReset.btn.textContent = 'もう一度押すと最初から'; } }, }, 'セーブを消して最初から'),
     backBtn());
   confirmReset.btn = [...scene.querySelectorAll('button')].find((b) => b.textContent === 'セーブを消して最初から');
