@@ -21,7 +21,7 @@ JTAGの営業用サイト（10onetg/jtag-website、Netlify）とは別のリポ�
 3. main に送る（push）と、Cloudflare Pages が自動で公開し直す。
 
 ## 公開前・公開後に残っていること
-- [ ] Googleアナリティクスの測定IDを `public/analytics.js` に入れる（新しいプロパティかデータストリームはJunが作る）。
+- [x] Googleアナリティクスの測定ID（ゲーム専用 G-968VQMM06X）を `public/analytics.js` に入れた（2026-10-20）。営業サイトのIDとは別。
 - [ ] AdSenseのコードを受け取ったら、各ページの `<!-- AdSense: ... -->` の所に貼る。`public/ads.txt` を置く（docs/publish-steps.md の 5）。
 - [x] Amazonのリンク（室内練習機2つ）を入れ、アソシエイトの定型文をフッターとプライバシーポリシーに追加した（2026-10-20）。ほかの枠のリンクは未定。
 - [x] 「試作版」の表記を外し、バージョン表示（v1.0.0）を入れた（2026-10-20、試作ファイル側）。
