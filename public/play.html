@@ -194,12 +194,12 @@ ul.rec li.done { color: inherit; }
 <script>
 const CHECKED = '2026年10月17日';
 // ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
-const VERSION = 'v1.0.0', VERSION_DATE = '2026年10月20日';
+const VERSION = 'v1.1.0', VERSION_DATE = '2026年10月20日';
 
 /* ---------- BGM ----------
    場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
    ブラウザの決まりで、最初にどこかをタップするまでは音が出ない */
-const BGM = { title: '', town: '', room: '', battle: '', fly: '', side: '', ending: '' };
+const BGM = { title: 'bgm/bgm-title.mp3', town: 'bgm/bgm-town.mp3', room: 'bgm/bgm-room.mp3', battle: 'bgm/bgm-battle.mp3', fly: 'bgm/bgm-fly.mp3', side: 'bgm/bgm-side.mp3', ending: 'bgm/bgm-ending.mp3' };
 const BGM_VOLUME = 0.5;
 const audio = { el: null, cur: '', unlocked: false };
 function bgmScene() {
