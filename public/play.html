@@ -101,14 +101,13 @@ button:disabled { opacity: .45; cursor: default; border-color: var(--line); }
 .aff a { color: var(--sun); }
 .afflinks { display: flex; flex-direction: column; gap: 4px; flex-basis: 100%; }
 .affcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; flex-basis: 100%; }
-.aff a.affcard { display: flex; gap: 10px; align-items: center; padding: 8px; border: 2px solid var(--line); border-radius: 8px; background: #0f1830; color: var(--ink); text-decoration: none; }
-.aff a.affcard:hover, .aff a.affcard:focus-visible { border-color: var(--sun); }
-.affpic { flex: none; width: 72px; height: 56px; border-radius: 6px; display: grid; place-items: center; background: linear-gradient(#3a5a9a, #7fb0e0 70%, #6fa35c 70%); font-family: var(--pixel); font-size: 15px; color: #fff; text-shadow: 0 1px 0 #1b2440; }
-.affpic span { animation: affbob 2.4s ease-in-out infinite; display: inline-block; }
-@keyframes affbob { 50% { transform: translateY(-4px); } }
+a.affcard { display: flex; gap: 10px; align-items: center; padding: 8px; border: 2px solid var(--line); border-radius: 8px; background: #0f1830; color: var(--ink); text-decoration: none; }
+a.affcard:hover, a.affcard:focus-visible { border-color: var(--sun); }
 .affinfo { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .affinfo b { font-weight: 400; font-family: var(--pixel); }
 .affinfo small { color: var(--ink-dim); font-size: 12px; }
+.gear { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.gear h3 { font-size: 15px; margin: 0; font-family: var(--pixel); font-weight: 400; color: var(--sun); }
 .affbtn { align-self: flex-start; margin-top: 2px; padding: 3px 10px; border-radius: 6px; background: var(--sun); color: #1b1408; font-size: 13px; }
 .adtag { font-size: 11px; border: 1px solid var(--ink-dim); color: var(--ink-dim); border-radius: 4px; padding: 0 5px; }
 .ad { border: 2px dashed var(--line); border-radius: 8px; padding: 22px 12px; text-align: center; color: var(--ink-dim); font-size: 13px; }
@@ -211,7 +210,7 @@ ul.rec li.done { color: inherit; }
 <script>
 const CHECKED = '2026年10月17日';
 // ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
-const VERSION = 'v1.3.1', VERSION_DATE = '2026年10月20日';
+const VERSION = 'v1.4.0', VERSION_DATE = '2026年10月20日';
 
 /* ---------- BGM ----------
    場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
@@ -298,7 +297,7 @@ const WORRIES = {
 const AFF_SHOW_EMPTY = false;
 const AFFILIATE = {
   toy: { title: '室内練習におすすめの機体（100g未満）', links: [
-    // name＝商品名、point＝ひとことの特徴（空なら出ない）。Amazonの商品画像は規約で自分では置けないので、ゲームの絵を使う
+    // name＝商品名、point＝ひとことの特徴（空なら出ない）
     { label: 'おすすめの室内練習機 1', name: '', point: '', url: 'https://link.amazon/B003Cnr8V' },
     { label: 'おすすめの室内練習機 2', name: '', point: '', url: 'https://link.amazon/B08V9Txw1' }] },
   aerial: { title: '空撮用ドローン（100g以上・リモートID内蔵・技適マークあり）', url: '' },
@@ -311,13 +310,39 @@ function affCard(key, small) {
   const a = AFFILIATE[key]; if (!a) return null;
   const links = a.links || (a.url ? [{ label: a.title + ' を見る', url: a.url }] : []);
   if (!links.length && !AFF_SHOW_EMPTY) return null;
-  const body = links.length && a.links && !small ? el('div', { class: 'affcards' }, ...links.map((l, i) => el('a', { class: 'affcard', href: l.url, target: '_blank', rel: 'sponsored noopener' },
-      el('span', { class: 'affpic', 'aria-hidden': 'true' }, el('span', {}, ['-[■]-', '-{◆}-', '-(●)-'][i % 3])),
-      el('span', { class: 'affinfo' }, el('b', {}, l.name || l.label), l.point ? el('small', {}, l.point) : null, el('span', { class: 'affbtn' }, 'Amazonで見る ▶')))))
+  const body = links.length && a.links && !small ? affCards(links)
     : links.length ? el('div', { class: 'afflinks' }, ...links.map((l) => el('a', { href: l.url, target: '_blank', rel: 'sponsored noopener' }, (l.name || l.label) + '（Amazon）')))
     : el('span', {}, a.title + '（リンク準備中）');
   return el('div', { class: 'aff' + (small ? ' small' : '') }, el('span', { class: 'adtag' }, '広告・PR'),
     small ? null : el('span', {}, links.length && a.links ? a.title + '：' : '実際に買うなら：'), body);
+}
+
+function affCards(links) {
+  return el('div', { class: 'affcards' }, ...links.map((l) => el('a', { class: 'affcard', href: l.url, target: '_blank', rel: 'sponsored noopener' },
+    el('span', { class: 'affinfo' }, el('b', {}, l.name || l.label), l.point ? el('small', {}, l.point) : null, el('span', { class: 'affbtn' }, 'Amazonで見る ▶')))));
+}
+// 先輩のおすすめ機材ページ：選ぶときのチェックポイント
+const GEAR_CHECK = {
+  toy: '100g未満か／技適マークがあるか／プロペラガードが付いていると、屋内でぶつけても安心。',
+  aerial: '技適マークがあるか／リモートIDが内蔵されているか（なければ後付けが必要）。100g以上なので、買ったら機体登録を忘れずに。',
+  'プロペラガード': 'お使いの機体の型番に合うものを選ぼう。',
+  '予備バッテリー': '純正品を選ぼう。保管は満充電のままにせず、涼しい場所で。',
+  '風速計': '標準マニュアル02では、風速5m/s以上では原則として飛ばさない。数字で確かめられると判断しやすい。',
+  'ランディングパッド': '砂地や草地での離着陸に。プロペラの風で砂やほこりを巻き上げるのを防ぐ。',
+};
+function viewGear() {
+  const secs = Object.entries(AFFILIATE).map(([k, a]) => {
+    const links = a.links || (a.url ? [{ label: a.title, url: a.url }] : []);
+    if (!links.length && !AFF_SHOW_EMPTY) return null;
+    return el('div', { class: 'gear' }, el('h3', {}, a.title), GEAR_CHECK[k] ? el('p', { class: 'small' }, '選ぶポイント：' + GEAR_CHECK[k]) : null,
+      links.length ? affCards(links) : el('p', { class: 'small', style: 'color:var(--ink-dim)' }, '（リンク準備中）'));
+  }).filter(Boolean);
+  scene.append(el('h2', {}, '先輩のおすすめ機材'),
+    el('p', {}, el('span', { class: 'adtag' }, '広告・PR'), '　Amazonのページが開きます。'),
+    msgBox('じゅん先輩', '実際に買うときの参考にしてね。選ぶときのチェックポイントも書いておくよ。買う前に、ゲームで覚えたルールをもう一度確かめよう！', null),
+    ...secs,
+    el('button', { type: 'button', onclick: () => { S.screen = 'bag'; save(); render(); } }, '持ち物にもどる'));
+  scene.querySelector('.msg .next')?.remove();
 }
 
 /* ---------- パーツ屋の品物 ---------- */
@@ -1144,7 +1169,7 @@ function render() {
   try { updateBgm(); } catch (e) {}
   scene.innerHTML = '';
   scene.scrollTop = 0;
-  ({ title: viewTitle, notice: viewNotice, map: viewMap, room: viewRoom, play: viewPlay, note: viewNote, bag: viewBag, ad: viewAd, ending: viewEnding, chapters: viewChapters, report: viewReport, parts: viewParts, practice: viewPractice, quests: viewQuests, lighthouse: viewLighthouse, sideclear: viewSideClear }[S.screen] || viewTitle)();
+  ({ title: viewTitle, notice: viewNotice, map: viewMap, room: viewRoom, play: viewPlay, note: viewNote, bag: viewBag, ad: viewAd, ending: viewEnding, chapters: viewChapters, report: viewReport, parts: viewParts, practice: viewPractice, quests: viewQuests, lighthouse: viewLighthouse, sideclear: viewSideClear, gear: viewGear }[S.screen] || viewTitle)();
 }
 
 /* ---------- 画面 ---------- */
@@ -2115,11 +2140,12 @@ function viewBag() {
   const nPass = Object.keys(PRACTICE).filter((k) => S.plog.pass[k]).length;
   const best = Object.entries(PRACTICE).map(([k, p]) => `${p.name}：${S.plog.best[k] ? S.plog.best[k].toFixed(1) + '秒' : '―'}`).join('　');
   scene.append(el('h2', {}, '持ち物'), box,
+    el('button', { type: 'button', class: 'primary', onclick: () => setScreen('gear') }, '🛒 先輩のおすすめ機材（実物を買うなら）'),
     el('p', { class: 'small' }, '下に、称号・看板図鑑・練習ログがあります。'),
     el('h2', {}, `称号（${S.badges.length} / ${Object.keys(BADGES).length}）`), badges,
     el('h2', {}, `看板図鑑（${S.signs.length} / ${keys.length}）`), signs,
     el('h2', {}, 'サブストーリー'), el('p', {}, `依頼：${S.sideDone.length} / ${SIDE_ORDER.length}　かくしアイテム：${Object.keys(HIDDEN).filter((k) => S.found.includes(k) || (HIDDEN[k].quest && S.sideDone.includes(HIDDEN[k].quest))).length} / ${Object.keys(HIDDEN).length}`),
-    el('button', { type: 'button', onclick: () => { S._return = 'bag'; setScreen('quests'); } }, '依頼の一覧を見る'),
+    el('button', { type: 'button', onclick: () => { S._from = 'bag'; setScreen('quests'); } }, '依頼の一覧を見る'),
     el('h2', {}, '練習ログ'), el('p', {}, `合格：${nPass} / ${Object.keys(PRACTICE).length}${nPass === Object.keys(PRACTICE).length ? '（10時間分の練習を完了）' : ''}　（練習 ${S.plog.runs}回）`), el('p', { class: 'small' }, 'ベストタイム　' + best),
     backBtn());
 }
@@ -2138,7 +2164,7 @@ function viewQuests() {
   const n = SIDE_ORDER.filter((id) => S.sideDone.includes(id)).length;
   scene.append(el('p', { class: 'place' }, '駅前の依頼ボード'), el('h2', {}, `サブストーリー「町のドローン便利屋」（${n} / ${SIDE_ORDER.length}）`),
     el('p', { class: 'small' }, 'メインの物語とは別に遊べる依頼です。クリアしなくても、メインの物語には影響しません。報酬をためて、パーツ屋のハイスペック機を手に入れよう。町で頭に「！」が出ている人が、依頼をくれます。'),
-    ul, el('button', { type: 'button', onclick: () => { S.screen = S._return && S._return !== 'quests' ? S._return : 'map'; save(); render(); } }, 'もどる'));
+    ul, el('button', { type: 'button', onclick: () => { S.screen = S._from === 'bag' ? 'bag' : S._return && !['quests', 'bag'].includes(S._return) ? S._return : 'map'; S._from = null; save(); render(); } }, 'もどる'));
 }
 function viewSideClear() {
   const q = SIDE[S.lastSide] || {};
@@ -2255,7 +2281,7 @@ function backBtn() {
   return el('button', { type: 'button', onclick: () => { S.screen = S._return || 'map'; save(); render(); } }, 'もどる');
 }
 function openPanel(name) {
-  if (!['note', 'bag', 'about', 'chapters', 'report'].includes(S.screen)) S._return = S.screen;
+  if (!['note', 'bag', 'about', 'chapters', 'report', 'gear', 'quests'].includes(S.screen)) S._return = S.screen;
   if (name === 'about') { S.screen = 'about'; renderStatus(); viewAbout(); return; }
   setScreen(name);
 }
