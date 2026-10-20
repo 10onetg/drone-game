@@ -20,6 +20,8 @@
 .app { height: calc(100% - 30px) !important; }
 .play-foot { max-width: 560px; margin: 6px auto 0; height: 24px; display: flex; gap: 14px; justify-content: center; font-size: 12px; line-height: 24px; }
 .play-foot a { color: #a7b4d0; }
+/* 章の合間の「広告枠」の仮の箱は、AdSenseの広告を入れるまで隠す */
+.ad { display: none !important; }
 </style>
 </head>
 <body>
@@ -191,6 +193,36 @@ ul.rec li.done { color: inherit; }
 
 <script>
 const CHECKED = '2026年10月17日';
+// ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
+const VERSION = 'v1.0.0', VERSION_DATE = '2026年10月20日';
+
+/* ---------- BGM ----------
+   場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
+   ブラウザの決まりで、最初にどこかをタップするまでは音が出ない */
+const BGM = { title: '', town: '', room: '', battle: '', fly: '', side: '', ending: '' };
+const BGM_VOLUME = 0.5;
+const audio = { el: null, cur: '', unlocked: false };
+function bgmScene() {
+  if (F.active) return 'fly';
+  if (['title', 'notice'].includes(S.screen)) return 'title';
+  if (S.screen === 'ending') return 'ending';
+  if (S.screen === 'map') return 'town';
+  if (S.inCh != null && CH[S.inCh]?.side) return 'side';
+  if (S.screen === 'play' && typeof inBattle === 'function' && inBattle()) return 'battle';
+  if (['room', 'play', 'practice', 'parts', 'lighthouse'].includes(S.screen)) return 'room';
+  return audio.cur ? audio.scene : 'town'; // 持ち物などの画面では、そのまま流し続ける
+}
+function updateBgm() {
+  const sc = bgmScene(), src = S.sound === false ? '' : (BGM[sc] || (['battle', 'side'].includes(sc) ? BGM.room : '') || ''); // バトルとサブは、曲がなければ建物の中の曲
+  audio.scene = sc;
+  if (src === audio.cur) return;
+  audio.cur = src;
+  if (!audio.el) { audio.el = new Audio(); audio.el.loop = true; audio.el.volume = BGM_VOLUME; }
+  if (!src) { audio.el.pause(); return; }
+  audio.el.src = src;
+  if (audio.unlocked) audio.el.play().catch(() => {});
+}
+window.addEventListener('pointerdown', () => { if (!audio.unlocked) { audio.unlocked = true; if (audio.cur) audio.el?.play().catch(() => {}); } }, { capture: true });
 const MLIT = 'https://www.mlit.go.jp/koku/koku_tk10_000003.html';
 
 /* ---------- 悩みノート ---------- */
@@ -1086,6 +1118,7 @@ function setScreen(name) { S.screen = name; save(); render(); }
 
 function render() {
   renderStatus();
+  try { updateBgm(); } catch (e) {}
   scene.innerHTML = '';
   scene.scrollTop = 0;
   ({ title: viewTitle, notice: viewNotice, map: viewMap, room: viewRoom, play: viewPlay, note: viewNote, bag: viewBag, ad: viewAd, ending: viewEnding, chapters: viewChapters, report: viewReport, parts: viewParts, practice: viewPractice, quests: viewQuests, lighthouse: viewLighthouse, sideclear: viewSideClear }[S.screen] || viewTitle)();
@@ -1102,12 +1135,13 @@ function viewTitle() {
   const hasSave = S.cleared >= 0;
   scene.append(
     el('div', { class: 'title-art', 'aria-hidden': 'true' }, el('div', { class: 'drone' }, '-[■]-'), el('div', { class: 'town' })),
-    el('p', { class: 'place' }, 'DRONE RPG　試作版'),
+    el('p', { class: 'place' }, 'DRONE RPG'),
     el('h1', {}, 'はじめてのフライト'),
     el('p', {}, '街でドローンを見かけたあなた。買う前の悩みから初フライトまで、ひとつずつ解決していこう。'),
     el('div', { class: 'choices' },
       hasSave ? el('button', { type: 'button', class: 'primary', onclick: () => setScreen('map') }, 'つづきから') : null,
       el('button', { type: 'button', class: hasSave ? '' : 'primary', onclick: () => { S = structuredClone(START); setScreen('notice'); } }, 'はじめから')),
+    el('p', { class: 'small', style: 'text-align:center;color:var(--ink-dim)' }, VERSION),
   );
 }
 
@@ -1672,7 +1706,7 @@ function playFly(f) {
   sizeCanvas();
   if (window.innerHeight < 600 && window.innerWidth > window.innerHeight) requestAnimationFrame(() => outer.scrollIntoView({ block: 'start' }));
   const RANGE = 6, ZONE = 1.8, SPEED = 3, ALTMAX = st.indoor ? 2.5 : 30;
-  F.active = true; F.keys = new Set(); F.st = st; document.body.classList.add('flying');
+  F.active = true; F.keys = new Set(); F.st = st; document.body.classList.add('flying'); updateBgm();
   const practice = f.walker === false;
   const key = (a, b) => (F.keys.has(a) ? 1 : 0) - (F.keys.has(b) ? 1 : 0);
   const setInfo = () => {
@@ -1689,7 +1723,7 @@ function playFly(f) {
   };
   const goalDone = () => (st.hover ? st.hold >= st.hover.sec : st.got === st.spots.length);
   const done = () => {
-    F.active = false; M.held = null; document.body.classList.remove('flying');
+    F.active = false; M.held = null; document.body.classList.remove('flying'); updateBgm();
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     if (f.onDone) { f.onDone((M.t - st.t0) / 1000); return; }
     if (f.badge && st.hits === 0) award(f.badge);
@@ -2121,7 +2155,8 @@ function viewPractice() {
 function viewAbout() {
   scene.innerHTML = '';
   scene.append(el('h2', {}, 'このゲームについて'), noticeBox(),
-    el('p', { class: 'small' }, '試作版です。絵や音楽はまだ入っていません。進み具合はこのブラウザに保存されます。'),
+    el('p', { class: 'small' }, `バージョン ${VERSION}（${VERSION_DATE}）。進み具合はこのブラウザに保存されます。`),
+    el('button', { type: 'button', onclick: () => { S.sound = S.sound === false; save(); updateBgm(); viewAbout(); } }, S.sound === false ? '🔇 BGM：オフ（押すとオン）' : '🔊 BGM：オン（押すとオフ）'),
     el('button', { type: 'button', onclick: () => setScreen('chapters') }, '章をえらんで、もう一度確認する'),
     el('button', { type: 'button', onclick: () => setScreen('report') }, '不具合・まちがいを報告する'),
     el('button', { type: 'button', onclick: () => { if (confirmReset.armed) { S = structuredClone(START); confirmReset.armed = false; setScreen('title'); } else { confirmReset.armed = true; confirmReset.btn.textContent = 'もう一度押すと最初から'; } }, }, 'セーブを消して最初から'),
@@ -2173,7 +2208,7 @@ function reportContext() {
   const st = ch != null ? stepsOf(ch)[S.step] : null;
   const text = st ? (st.say ? st.say.join('：') : st.quiz?.q || st.multi?.q || st.choice?.q || st.order?.q || st.fly?.q || '') : '';
   return [`場所：${ch != null ? CH[ch].title : '町'}（${ch != null ? 'ステップ' + S.step : '-'}）`, text ? `画面の文：${text}` : '',
-    `クリア済み：${S.cleared + 1}章　確認日：${CHECKED}`, `端末：${navigator.userAgent}`].filter(Boolean).join('\n');
+    `バージョン：${VERSION}　クリア済み：${S.cleared + 1}章　確認日：${CHECKED}`, `端末：${navigator.userAgent}`].filter(Boolean).join('\n');
 }
 function viewReport() {
   const kind = el('select', {}, ...['動かない・表示がおかしい', '法律やルールのまちがい', '文章のまちがい・分かりにくい', 'その他・感想'].map((t) => el('option', {}, t)));
