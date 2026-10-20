@@ -210,7 +210,7 @@ ul.rec li.done { color: inherit; }
 <script>
 const CHECKED = '2026年10月17日';
 // ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
-const VERSION = 'v1.4.3', VERSION_DATE = '2026年10月20日';
+const VERSION = 'v1.4.4', VERSION_DATE = '2026年10月20日';
 
 /* ---------- BGM ----------
    場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
@@ -310,6 +310,8 @@ const AFFILIATE = {
     { label: 'ランディングパッド（65cm）', name: '', point: '', url: 'https://link.amazon/B0dw0CdC2' }] },
   'カラーコーン': { title: '折りたたみカラーコーン', links: [
     { label: '折りたたみカラーコーン', name: '', point: '', url: 'https://link.amazon/B0c70U1Zi' }] },
+  'サインボード': { title: '「ドローン飛行中」サインボード', links: [
+    { label: 'ドローン飛行中 サインボード', name: '', point: '', url: 'https://link.amazon/B0iS4PEcZ' }] },
 };
 function affCard(key, small) {
   const a = AFFILIATE[key]; if (!a) return null;
@@ -332,6 +334,7 @@ const GEAR_CHECK = {
   aerial: '技適マークがあるか／リモートIDが内蔵されているか（なければ後付けが必要）。100g以上なので、買ったら機体登録を忘れずに。',
   '風速計': '標準マニュアル02では、風速5m/s以上では原則として飛ばさない。数字で確かめられると判断しやすい。',
   'カラーコーン': '飛行範囲に人が入らないよう、区画を示す目印に使える。練習のときは、旋回や八の字飛行の目印にもなる。折りたたみなら持ち運びやすい。',
+  'サインボード': '通りかかった人に「今ドローンを飛ばしている」と知らせられる。カラーコーンと一緒に置くと、飛行範囲に入らないようお願いしやすい。',
   'ランディングパッド': '砂地や草地での離着陸に。プロペラの風で砂やほこりを巻き上げるのを防ぐ。機体の大きさに合うサイズを選ぼう（50cmと65cmを紹介しています）。',
 };
 function viewGear() {
