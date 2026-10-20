@@ -133,6 +133,12 @@ ul.rec li.done { color: inherit; }
 .townwrap { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
 .town-cv { display: block; border: 2px solid var(--line); border-radius: 8px; touch-action: none; image-rendering: pixelated; max-width: 100%; background: var(--sky); }
 .townmsg { width: 100%; min-height: 64px; }
+.walkhead { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.walkhead button { font-size: 13px; padding: 5px 10px; }
+.mapov { position: fixed; inset: 0; z-index: 40; background: rgba(6,10,22,.92); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; overflow: auto; }
+.mapov canvas { display: block; border: 2px solid var(--line); border-radius: 8px; max-width: 100%; }
+.mapov .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 13px; }
+.mapov .legend span { white-space: nowrap; }
 .townmsg .hint { padding: 6px 2px; }
 .pad { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-inline: 4px; user-select: none; -webkit-user-select: none; }
 .dpad { display: grid; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(3, 52px); gap: 4px; }
@@ -194,7 +200,7 @@ ul.rec li.done { color: inherit; }
 <script>
 const CHECKED = '2026年10月17日';
 // ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
-const VERSION = 'v1.1.0', VERSION_DATE = '2026年10月20日';
+const VERSION = 'v1.2.0', VERSION_DATE = '2026年10月20日';
 
 /* ---------- BGM ----------
    場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
@@ -1117,6 +1123,7 @@ function renderStatus() {
 function setScreen(name) { S.screen = name; save(); render(); }
 
 function render() {
+  if (S.screen !== 'map') closeTownMap();
   renderStatus();
   try { updateBgm(); } catch (e) {}
   scene.innerHTML = '';
@@ -1348,7 +1355,9 @@ function buildWalk(label) {
   const cv = el('canvas', { class: 'town-cv', width: '352', height: '288', 'aria-label': 'マップ。矢印キーか十字ボタンで歩き、Aボタンで話しかける' });
   const msg = el('div', { class: 'townmsg', id: 'townmsg' });
   wrap.append(cv, msg, makePad(interact));
-  scene.append(el('p', { class: 'place' }, label), wrap);
+  const head = el('div', { class: 'walkhead' }, el('p', { class: 'place' }, label));
+  if (!M.map.room) head.append(el('button', { type: 'button', onclick: openTownMap, 'aria-label': '町の全体マップを見る（Mキー）' }, '🗺 全体マップ'));
+  scene.append(head, wrap);
   M.canvas = cv; M.ctx = cv.getContext('2d');
   sizeCanvas();
   showHint();
@@ -1373,7 +1382,9 @@ window.addEventListener('keydown', (e) => {
   if (S.screen === 'play' && (e.key === 'Enter' || e.key === ' ' || e.key === 'z')) {
     const a = document.querySelector('.msg-a'); if (a) { e.preventDefault(); a.click(); } return;
   }
+  if (document.querySelector('.mapov')) { if (['Escape', 'm', 'M', 'Enter', ' '].includes(e.key)) { e.preventDefault(); closeTownMap(); } return; }
   if (!isWalk()) return;
+  if ((e.key === 'm' || e.key === 'M') && S.screen === 'map') { e.preventDefault(); openTownMap(); return; }
   if (KEYMAP[e.key]) { e.preventDefault(); M.held = KEYMAP[e.key]; }
   if (isWalk() && (e.key === 'Enter' || e.key === ' ' || e.key === 'z')) { e.preventDefault(); interact(); }
 });
@@ -1637,6 +1648,64 @@ function drawMonster(sx, sy) {
   c.fillStyle = '#1b1408'; c.fillRect(sx + ts * 0.36, sy + ts * 0.46 + b, 3, 3); c.fillRect(sx + ts * 0.6, sy + ts * 0.46 + b, 3, 3);
 }
 
+/* ---------- 町の全体マップ ---------- */
+// 今の目的地（タイルの四角）。下の目的の文と同じ考え方で決める
+function mapGoals() {
+  const B = (k) => BUILDINGS.filter((b) => b.key === k);
+  if (S.cleared >= CH.length - 1 && S.inCh == null) return [];
+  if (S.needPractice) return S.items.includes(PRACTICE_REC) ? B('home') : B('school');
+  if (S.inCh === 6 && curSeg() === 'farmer') return B('farm');
+  if (S.inCh === 10 && curSeg() === 'senpai') return B('senpai');
+  if (S.inCh === 10 && curSeg() === 'chair') return B('shop');
+  if (S.inCh != null && stepsOf(S.inCh)[S.step]?.needSign) { if (S.signRead) return B('home'); const [x, y] = Object.keys(SIGNS)[0].split(',').map(Number); return [{ x, y, w: 1, h: 1 }]; }
+  const ch = S.inCh ?? targetCh();
+  if (GATE_CHS.includes(ch)) return [{ x: 9, y: 7, w: 1, h: 1 }];
+  const npc = NPCS.find((n) => n.ch === ch); if (npc) return [{ x: npc.x, y: npc.y, w: 1, h: 1 }];
+  if ([2, 6, 10].includes(ch)) return B('home');
+  return BUILDINGS.filter((b) => b.key && BLD_CHS[b.key]?.includes(ch));
+}
+function closeTownMap() { cancelAnimationFrame(M.ovLoop); document.querySelector('.mapov')?.remove(); M.canvas?.focus?.(); }
+function openTownMap() {
+  if (S.screen !== 'map' || document.querySelector('.mapov')) return;
+  M.held = null;
+  const W = Math.min(window.innerWidth - 32, 760), s = Math.max(5, Math.floor(W / MW)), dpr = window.devicePixelRatio || 1;
+  const cv = el('canvas', { role: 'img', 'aria-label': '町の全体マップ。白い丸が今いる場所、黄色い星が次の目的地' });
+  cv.style.width = s * MW + 'px'; cv.style.height = s * MH + 'px'; cv.width = s * MW * dpr; cv.height = s * MH * dpr;
+  const goals = mapGoals(), jobs = TOWNMAP.npcs.filter((n) => sideReady(n.id) || (n.kind === 'board' && SIDE_ORDER.some((id) => !S.sideDone.includes(id) && SIDE[id].cond())));
+  const ov = el('div', { class: 'mapov', role: 'dialog', 'aria-label': '町の全体マップ', onclick: closeTownMap },
+    el('p', { class: 'place' }, '町の全体マップ'), cv,
+    el('div', { class: 'legend' }, el('span', {}, '⚪ 今いる場所'), goals.length ? el('span', {}, '⭐ 次の目的地') : null, jobs.length ? el('span', {}, '！ 依頼がある人') : null, S.treasureMap ? el('span', {}, '✦ 宝の地図の印') : null),
+    el('p', { class: 'small' }, $('townmsg')?.textContent || ''),
+    el('button', { type: 'button' }, 'とじる'));
+  document.body.append(ov);
+  const c = cv.getContext('2d'); c.scale(dpr, dpr);
+  const label = (t, x, y, size) => { c.font = `${size}px DotGothic16, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = 'rgba(10,14,30,.85)'; c.strokeText(t, x, y); c.fillStyle = '#fff'; c.fillText(t, x, y); };
+  const star = (x, y, r) => { c.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r; c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } c.closePath(); c.fill(); c.stroke(); };
+  const fs = Math.max(10, Math.round(s * 1.25));
+  function frame(t) {
+    for (let y = 0; y < MH; y++) for (let x = 0; x < MW; x++) {
+      const k = TOWN[y][x]; c.fillStyle = TILE_COLOR[k] || '#4f8a52'; c.fillRect(x * s, y * s, s + 0.5, s + 0.5);
+      if (k === 't') { c.fillStyle = '#3f7a46'; c.beginPath(); c.arc(x * s + s / 2, y * s + s / 2, s * 0.42, 0, 7); c.fill(); }
+      if (k === 'H') { c.fillStyle = ['#a84a3a', '#3a5a8a', '#6a6a6a', '#8a5a2a'][(x * 3 + y * 5) % 4]; c.fillRect(x * s + 1, y * s + 1, s - 2, s - 2); }
+      if (k === 'k') { c.fillStyle = S.signs.includes(`${x},${y}`) ? '#9a9a9a' : '#efe6d2'; c.fillRect(x * s + s * 0.15, y * s + s * 0.2, s * 0.7, s * 0.5); }
+      if (k === 'R') { c.fillStyle = '#c0c0c0'; c.fillRect(x * s, y * s + s * 0.3, s, 1); c.fillRect(x * s, y * s + s * 0.7, s, 1); }
+    }
+    for (const b of BUILDINGS) { c.fillStyle = b.color; c.fillRect(b.x * s, b.y * s, b.w * s, b.h * s); c.strokeStyle = 'rgba(0,0,0,.35)'; c.lineWidth = 1; c.strokeRect(b.x * s + 0.5, b.y * s + 0.5, b.w * s - 1, b.h * s - 1); }
+    for (const b of BUILDINGS) if (b.door) { c.fillStyle = '#3a2a1c'; c.fillRect(b.door[0] * s + s * 0.2, b.door[1] * s, s * 0.6, s); }
+    for (const b of BUILDINGS) { const nm = s < 11 && b.name.length > 5 ? b.name.replace('ドローン', '') : b.name; label(nm, (b.x + b.w / 2) * s, (b.y + b.h / 2) * s, Math.min(fs, Math.floor((b.w + 0.6) * s / nm.length))); }
+    for (const [t2, x, y] of [['川', 13.5, 18], ['海', 24, 34.2], ['草原', 6, 3.5], ['公園', 5, 21], ['校庭', 41, 16.5]]) label(t2, x * s, y * s, fs);
+    if (S.treasureMap) for (const [k, h] of Object.entries(HIDDEN)) { if (S.found.includes(k) || (h.quest && S.sideDone.includes(h.quest))) continue; const [hx, hy] = k.split(',').map(Number); c.fillStyle = '#ffd54a'; c.strokeStyle = '#7a5a00'; c.lineWidth = 1; star(hx * s + s / 2, hy * s + s / 2, s * 0.5); }
+    for (const n of jobs) { c.fillStyle = '#ffd54a'; c.font = `bold ${fs + 2}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = '#1b1408'; c.strokeText('！', n.x * s + s / 2, n.y * s - s * 0.2); c.fillText('！', n.x * s + s / 2, n.y * s - s * 0.2); }
+    const bob = Math.sin(t / 250) * s * 0.25;
+    for (const g of goals) { c.fillStyle = '#ffd54a'; c.strokeStyle = '#7a5a00'; c.lineWidth = 2; star((g.x + g.w / 2) * s, (g.y - 0.6) * s + bob, Math.max(7, s * 1.1)); }
+    const P = S.pos, on = Math.floor(t / 400) % 2;
+    c.fillStyle = on ? '#ffffff' : '#ff5a5a'; c.strokeStyle = '#10192e'; c.lineWidth = 2; c.beginPath(); c.arc(P.x * s + s / 2, P.y * s + s / 2, Math.max(4, s * 0.6), 0, 7); c.fill(); c.stroke();
+    label('あなた', P.x * s + s / 2, (P.y + 1.6) * s, fs);
+    M.ovLoop = requestAnimationFrame(frame);
+  }
+  M.ovLoop = requestAnimationFrame(frame);
+  ov.querySelector('button').focus();
+}
 function drawPerson(sx, sy, color, dir, walking, label, me) {
   const c = M.ctx, ts = M.ts, step = walking && Math.floor(M.t / 120) % 2 ? ts * 0.05 : 0;
   c.fillStyle = 'rgba(0,0,0,.25)'; c.beginPath(); c.ellipse(sx + ts / 2, sy + ts * 0.9, ts * 0.28, ts * 0.08, 0, 0, 7); c.fill();
