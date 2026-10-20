@@ -210,7 +210,7 @@ ul.rec li.done { color: inherit; }
 <script>
 const CHECKED = '2026年10月17日';
 // ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
-const VERSION = 'v1.4.4', VERSION_DATE = '2026年10月20日';
+const VERSION = 'v1.4.5', VERSION_DATE = '2026年10月20日';
 
 /* ---------- BGM ----------
    場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
@@ -1961,12 +1961,14 @@ function drawFly(st, RANGE, ZONE) {
     c.fillStyle = '#fff'; c.fillRect(b.x - b.k * 0.08, (b.y + t.y) / 2, b.k * 0.16, Math.max(2, b.k * 0.05));
   } });
   st.spots.forEach((s, i) => objs.push({ y: s.y, draw: () => {
+    // 同じ場所に2つの目印があるとき（8の字の1と5）は、まだ通っていない若い番号だけを描く
+    if (st.ordered && st.spots.some((o, j) => j < i && !o.ok && o.x === s.x && o.y === s.y)) return;
     const next = !st.ordered || i === st.got, dim = s.ok || !next;
     const b = proj(cam, s.x, s.y, 0), t = proj(cam, s.x, s.y, 0.9);
     c.strokeStyle = dim ? 'rgba(255,255,255,.3)' : 'rgba(255,255,255,.8)'; c.lineWidth = Math.max(1, b.k * 0.05);
     c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(t.x, t.y); c.stroke();
     c.fillStyle = s.ok ? 'rgba(255,255,255,.35)' : next ? '#ffd54a' : 'rgba(255,213,74,.45)'; c.font = `${Math.round(t.k * 0.7)}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('★', t.x, t.y);
-    if (st.ordered && !s.ok) { c.fillStyle = '#1b2440'; c.font = `bold ${Math.round(t.k * 0.3)}px sans-serif`; c.fillText(String(i + 1), t.x, t.y + t.k * 0.04); }
+    if (st.ordered && !s.ok) { c.fillStyle = '#1b2440'; c.font = `bold ${Math.max(10, Math.round(t.k * 0.36))}px sans-serif`; c.fillText(String(i + 1), t.x, t.y + t.k * 0.05); }
   } }));
   const person = (x, y, color, dir, walking, me) => objs.push({ y, draw: () => {
     const b = proj(cam, x, y, 0), size = b.k * (st.indoor ? 1.7 : 0.9), old = M.ts;
