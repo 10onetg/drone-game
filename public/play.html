@@ -210,7 +210,7 @@ ul.rec li.done { color: inherit; }
 <script>
 const CHECKED = '2026年10月17日';
 // ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
-const VERSION = 'v1.4.0', VERSION_DATE = '2026年10月20日';
+const VERSION = 'v1.4.1', VERSION_DATE = '2026年10月20日';
 
 /* ---------- BGM ----------
    場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
@@ -300,11 +300,13 @@ const AFFILIATE = {
     // name＝商品名、point＝ひとことの特徴（空なら出ない）
     { label: 'おすすめの室内練習機 1', name: '', point: '', url: 'https://link.amazon/B003Cnr8V' },
     { label: 'おすすめの室内練習機 2', name: '', point: '', url: 'https://link.amazon/B08V9Txw1' }] },
-  aerial: { title: '空撮用ドローン（100g以上・リモートID内蔵・技適マークあり）', url: '' },
-  'プロペラガード': { title: 'お使いの機体に合うプロペラガード', url: '' },
-  '予備バッテリー': { title: 'お使いの機体の純正バッテリー', url: '' },
+  aerial: { title: 'リモートID搭載の空撮用ドローン（100g以上）', links: [
+    { label: 'おすすめのリモートID搭載ドローン 1', name: '', point: '', url: 'https://link.amazon/B04z0qfQK' },
+    { label: 'おすすめのリモートID搭載ドローン 2', name: '', point: '', url: 'https://link.amazon/B0ahM0VQm' }] },
   '風速計': { title: '携帯できる風速計', url: '' },
-  'ランディングパッド': { title: 'ドローン用ランディングパッド', url: '' },
+  'ランディングパッド': { title: 'ドローン用ランディングパッド', links: [
+    { label: 'ランディングパッド（50cm）', name: '', point: '', url: 'https://link.amazon/B042r4ZNw' },
+    { label: 'ランディングパッド（65cm）', name: '', point: '', url: 'https://link.amazon/B0dw0CdC2' }] },
 };
 function affCard(key, small) {
   const a = AFFILIATE[key]; if (!a) return null;
@@ -325,10 +327,8 @@ function affCards(links) {
 const GEAR_CHECK = {
   toy: '100g未満か／技適マークがあるか／プロペラガードが付いていると、屋内でぶつけても安心。',
   aerial: '技適マークがあるか／リモートIDが内蔵されているか（なければ後付けが必要）。100g以上なので、買ったら機体登録を忘れずに。',
-  'プロペラガード': 'お使いの機体の型番に合うものを選ぼう。',
-  '予備バッテリー': '純正品を選ぼう。保管は満充電のままにせず、涼しい場所で。',
   '風速計': '標準マニュアル02では、風速5m/s以上では原則として飛ばさない。数字で確かめられると判断しやすい。',
-  'ランディングパッド': '砂地や草地での離着陸に。プロペラの風で砂やほこりを巻き上げるのを防ぐ。',
+  'ランディングパッド': '砂地や草地での離着陸に。プロペラの風で砂やほこりを巻き上げるのを防ぐ。機体の大きさに合うサイズを選ぼう（50cmと65cmを紹介しています）。',
 };
 function viewGear() {
   const secs = Object.entries(AFFILIATE).map(([k, a]) => {
