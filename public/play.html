@@ -96,6 +96,7 @@ button:disabled { opacity: .45; cursor: default; border-color: var(--line); }
 .aff { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border: 2px dashed var(--line); border-radius: 8px; padding: 8px 10px; margin-top: 8px; font-size: 14px; }
 .aff.small { font-size: 12px; padding: 4px 8px; margin-top: 6px; }
 .aff a { color: var(--sun); }
+.afflinks { display: flex; flex-direction: column; gap: 4px; flex-basis: 100%; }
 .adtag { font-size: 11px; border: 1px solid var(--ink-dim); color: var(--ink-dim); border-radius: 4px; padding: 0 5px; }
 .ad { border: 2px dashed var(--line); border-radius: 8px; padding: 22px 12px; text-align: center; color: var(--ink-dim); font-size: 13px; }
 ul.note { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
@@ -246,7 +247,9 @@ const WORRIES = {
    AFF_SHOW_EMPTY が true の間は、url が空の枠も「準備中」として表示する（公開前に false にする） */
 const AFF_SHOW_EMPTY = false;
 const AFFILIATE = {
-  toy: { title: '練習用ドローン（100g未満・技適マークあり）', url: '' },
+  toy: { title: '室内練習におすすめの機体（100g未満）', links: [
+    { label: 'おすすめの室内練習機 1', url: 'https://link.amazon/B003Cnr8V' },
+    { label: 'おすすめの室内練習機 2', url: 'https://link.amazon/B08V9Txw1' }] },
   aerial: { title: '空撮用ドローン（100g以上・リモートID内蔵・技適マークあり）', url: '' },
   'プロペラガード': { title: 'お使いの機体に合うプロペラガード', url: '' },
   '予備バッテリー': { title: 'お使いの機体の純正バッテリー', url: '' },
@@ -254,10 +257,13 @@ const AFFILIATE = {
   'ランディングパッド': { title: 'ドローン用ランディングパッド', url: '' },
 };
 function affCard(key, small) {
-  const a = AFFILIATE[key]; if (!a || (!a.url && !AFF_SHOW_EMPTY)) return null;
-  const body = a.url ? el('a', { href: a.url, target: '_blank', rel: 'sponsored noopener' }, a.title + ' を見る')
+  const a = AFFILIATE[key]; if (!a) return null;
+  const links = a.links || (a.url ? [{ label: a.title + ' を見る', url: a.url }] : []);
+  if (!links.length && !AFF_SHOW_EMPTY) return null;
+  const body = links.length ? el('div', { class: 'afflinks' }, ...links.map((l) => el('a', { href: l.url, target: '_blank', rel: 'sponsored noopener' }, l.label + '（Amazon）')))
     : el('span', {}, a.title + '（リンク準備中）');
-  return el('div', { class: 'aff' + (small ? ' small' : '') }, el('span', { class: 'adtag' }, '広告'), small ? null : el('span', {}, '実際に買うなら：'), body);
+  return el('div', { class: 'aff' + (small ? ' small' : '') }, el('span', { class: 'adtag' }, '広告・PR'),
+    small ? null : el('span', {}, links.length && a.links ? a.title + '：' : '実際に買うなら：'), body);
 }
 
 /* ---------- パーツ屋の品物 ---------- */
@@ -366,7 +372,7 @@ CH[1] = { place: '家電店', title: '第1章　はじめての1台', steps: [
     { text: 'C　空撮用ドローン（98,000円・100g以上・リモートID内蔵）', ok: false, retry: true,
       fb: '店員「こちらは100g以上なので、登録などの手続きが必要です。まずは100g未満の練習機で操縦に慣れてから、ステップアップするのがおすすめですよ。」' },
   ]}},
-  { aff: 'toy', text: '実際に練習機を買うときも、ゲームと同じように「100g未満」「技適マークあり」を確かめよう。' },
+  { aff: 'toy', text: '実際に室内で練習する機体を買うなら、上がおすすめです。買うときも、ゲームと同じように「100g未満」「技適マークあり」を確かめよう。' },
   { note: 'w_giteki' },
   { seg: 'norio' },
   { say: ['ノリオ', '100g未満なら登録いらないって、店員さんも言ってたよな。じゃあ、どこで飛ばしても自由ってことだ！'] },
