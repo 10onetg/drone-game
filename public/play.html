@@ -219,7 +219,7 @@ ul.rec li.done { color: inherit; }
 <script>
 const CHECKED = '2026年10月17日';
 // ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
-const VERSION = 'v1.5.0', VERSION_DATE = '2026年10月20日';
+const VERSION = 'v1.5.1', VERSION_DATE = '2026年10月20日';
 
 /* ---------- BGM ----------
    場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
@@ -305,6 +305,8 @@ const WORRIES = {
    AFF_SHOW_EMPTY が true の間は、url が空の枠も「準備中」として表示する（公開前に false にする） */
 const AFF_SHOW_EMPTY = false;
 const AFFILIATE = {
+  '教本': { title: 'ドローンの教本（教科書）', links: [
+    { label: 'ドローンの教本', name: '', point: '', url: 'https://link.amazon/B0ct8fdly' }] },
   toy: { title: '室内練習におすすめの機体（100g未満）', links: [
     // name＝商品名、point＝ひとことの特徴（空なら出ない）
     { label: 'おすすめの室内練習機 1', name: '', point: '', url: 'https://link.amazon/B003Cnr8V' },
@@ -339,6 +341,7 @@ function affCards(links) {
 }
 // 先輩のおすすめ機材ページ：選ぶときのチェックポイント
 const GEAR_CHECK = {
+  '教本': 'ゲームで覚えたルールや操縦の基本を、本できちんと学び直せる。このゲームの作者が所属する団体が発行している教科書です。',
   toy: '100g未満か／技適マークがあるか／プロペラガードが付いていると、屋内でぶつけても安心。',
   aerial: '技適マークがあるか／リモートIDが内蔵されているか（なければ後付けが必要）。100g以上なので、買ったら機体登録を忘れずに。',
   '風速計': '標準マニュアル02では、風速5m/s以上では原則として飛ばさない。数字で確かめられると判断しやすい。',
