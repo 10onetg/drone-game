@@ -203,6 +203,16 @@ ul.rec li.done { color: inherit; }
 @media (hover: hover) and (pointer: fine) { .pad { justify-content: center; } }
 @media (prefers-reduced-motion: reduce) { .drone, .msg .next { animation: none; } }
 @media (max-width: 380px) { .status { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+.cert { border: 4px double var(--sun); border-radius: 10px; padding: 14px 16px; margin: 14px 0; background: rgba(255, 213, 74, 0.08); text-align: center; }
+.cert h2 { margin: 4px 0 10px; color: var(--sun); }
+.cert-top { margin: 0; font-size: 13px; letter-spacing: 2px; }
+.cert-row { display: flex; justify-content: space-between; border-bottom: 1px dotted rgba(255,255,255,0.3); padding: 4px 0; text-align: left; }
+.cert-date { margin: 10px 0 0; font-size: 14px; text-align: right; }
+.next-series { font-weight: bold; text-align: center; }
+.celebrate { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
+.consult { border: 2px solid var(--sun); border-radius: 8px; padding: 10px 12px; margin: 14px 0; }
+.consult p { margin: 4px 0 8px; }
+.consult-link { color: var(--sun); font-weight: bold; }
 </style>
 
 <div class="app" id="app">
@@ -219,7 +229,7 @@ ul.rec li.done { color: inherit; }
 <script>
 const CHECKED = '2026年10月17日';
 // ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
-const VERSION = 'v1.7.0', VERSION_DATE = '2026年10月21日';
+const VERSION = 'v1.8.0', VERSION_DATE = '2026年10月21日';
 
 /* ---------- BGM ----------
    場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
@@ -367,7 +377,7 @@ function viewGear() {
   scene.append(el('h2', {}, '先輩のおすすめ機材'),
     el('p', {}, el('span', { class: 'adtag' }, '広告・PR'), '　Amazonのページが開きます。'),
     msgBox('じゅん先輩', '実際に買うときの参考にしてね。選ぶときのチェックポイントも書いておくよ。買う前に、ゲームで覚えたルールをもう一度確かめよう！', null),
-    ...secs,
+    ...secs, consultBox(),
     el('button', { type: 'button', onclick: () => { S.screen = 'bag'; save(); render(); } }, '持ち物にもどる'));
   scene.querySelector('.msg .next')?.remove();
 }
@@ -2372,7 +2382,7 @@ function viewParts() {
   scene.append(el('p', { class: 'place' }, 'パーツ屋'), el('h2', {}, 'パーツ屋の店主「いらっしゃい！」'),
     el('p', {}, 'あると安心な道具がそろってるよ。持っていると、飛ばすときに役立つ場面があるんだ。'), list, status,
     el('h2', {}, '機体コーナー（ハイスペック機）'),
-    el('p', { class: 'small' }, '店主「高いけど、これがあれば受けられる仕事が増えるよ。お金は、町の依頼ボードの仕事でためるといい。」'), drones,
+    el('p', { class: 'small' }, '店主「高いけど、これがあれば受けられる仕事が増えるよ。お金は、町の依頼ボードの仕事でためるといい。」'), drones, consultBox(),
     el('button', { type: 'button', onclick: () => setScreen('map') }, '町に戻る'));
 }
 
@@ -2419,7 +2429,7 @@ function viewAbout() {
     el('p', { class: 'small' }, `バージョン ${VERSION}（${VERSION_DATE}）。進み具合はこのブラウザに保存されます。`),
     el('button', { type: 'button', onclick: () => { S.sound = S.sound === false; save(); updateBgm(); viewAbout(); } }, S.sound === false ? '🔇 BGM：オフ（押すとオン）' : '🔊 BGM：オン（押すとオフ）'),
     el('button', { type: 'button', onclick: () => setScreen('chapters') }, '章をえらんで、もう一度確認する'),
-    el('button', { type: 'button', onclick: () => setScreen('report') }, '不具合・まちがいを報告する'),
+    el('button', { type: 'button', onclick: () => setScreen('report') }, '報告・質問'),
     el('button', { type: 'button', onclick: () => { S._resume = S._return && !['title', 'notice'].includes(S._return) ? S._return : 'map'; setScreen('title'); } }, 'タイトル画面に戻る（セーブはそのまま）'),
     el('p', { class: 'small' }, el('a', { href: HOME_URL, target: '_blank', rel: 'noopener' }, 'JTAGのホームページ（ドローン空撮）を開く'), '（別のタブで開きます）'),
     el('button', { type: 'button', onclick: () => { if (confirmReset.armed) { S = structuredClone(START); confirmReset.armed = false; setScreen('title'); } else { confirmReset.armed = true; confirmReset.btn.textContent = 'もう一度押すと最初から'; } }, }, 'セーブを消して最初から'),
@@ -2492,7 +2502,14 @@ function viewReview() {
 
 /* ---------- 不具合・まちがいの報告 ---------- */
 // 送り先：Googleフォームなどを用意したら、そのURLをここに入れる（空なら内容のコピーだけ）
-const REPORT_URL = '';
+const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdNDK1FBIkHkrtypr5Ro0H9JaMUCu5DkEPhqdgPl-vyUZaNQw/viewform'; // お問い合わせ・不具合報告（info.jtag の Googleフォーム）
+const FORM_KINDS = ['不具合（動かない・表示がおかしい）', '法律やルールのまちがい', '文章のまちがい・分かりにくい', 'ドローンの購入についての質問', '資格・ドローンスクールについての質問', 'その他・感想'];
+function formUrl(kind, text) { return `${FORM_URL}?usp=pp_url&entry.1468250922=${encodeURIComponent(kind)}` + (text ? `&entry.709445540=${encodeURIComponent(text)}` : ''); }
+function consultBox() { // 購入相談の入口（おすすめ機材・パーツ屋）
+  return el('div', { class: 'consult' }, el('b', {}, 'どれを選べばいいか迷ったら'),
+    el('p', { class: 'small' }, 'ドローンや道具の選び方を、ドローンスクールのインストラクターに相談できます。'),
+    el('a', { href: formUrl(FORM_KINDS[3]), target: '_blank', rel: 'noopener', class: 'consult-link' }, '購入相談はこちら（フォームが開きます）'));
+}
 function reportContext() {
   const ch = S._return === 'play' || S._return === 'room' ? S.ch : S.inCh;
   const st = ch != null ? stepsOf(ch)[S.step] : null;
@@ -2501,19 +2518,19 @@ function reportContext() {
     `バージョン：${VERSION}　クリア済み：${S.cleared + 1}章　確認日：${CHECKED}`, `端末：${navigator.userAgent}`].filter(Boolean).join('\n');
 }
 function viewReport() {
-  const kind = el('select', {}, ...['動かない・表示がおかしい', '法律やルールのまちがい', '文章のまちがい・分かりにくい', 'その他・感想'].map((t) => el('option', {}, t)));
-  const body = el('textarea', { rows: '5', placeholder: 'どこで、何が起きたか（何がまちがっているか）を書いてください。', style: 'width:100%' });
+  const kind = el('select', {}, ...FORM_KINDS.map((t) => el('option', {}, t)));
+  const body = el('textarea', { rows: '5', placeholder: 'どこで、何が起きたか（何がまちがっているか）、または聞きたいことを書いてください。', style: 'width:100%' });
   const ctx = el('pre', { class: 'small', style: 'white-space:pre-wrap;margin:0' }, reportContext());
   const status = el('p', { class: 'small', role: 'status' }, '');
   const full = () => `【種類】${kind.value}\n【内容】${body.value}\n【自動で入る情報】\n${ctx.textContent}`;
   const copy = el('button', { type: 'button', onclick: async () => {
     try { await navigator.clipboard.writeText(full()); status.textContent = 'コピーしました。'; } catch { status.textContent = 'コピーできませんでした。下の内容を長押ししてコピーしてください。'; }
   } }, '内容をコピー');
-  const send = REPORT_URL ? el('button', { type: 'button', class: 'primary', onclick: () => {
-    window.open(REPORT_URL.replace('{text}', encodeURIComponent(full())), '_blank', 'noopener'); status.textContent = '報告フォームを開きました。';
-  } }, '報告フォームを開く') : null;
-  scene.append(el('h2', {}, '不具合・まちがいを報告する'),
-    el('p', { class: 'small' }, '気づいたことを教えてください。今いる場所などの情報は自動で入ります。'),
+  const send = el('button', { type: 'button', class: 'primary', onclick: () => {
+    window.open(formUrl(kind.value, `${body.value}\n\n【自動で入る情報】\n${ctx.textContent}`), '_blank', 'noopener'); status.textContent = 'フォームを開きました。内容を確かめて「送信」を押してください。';
+  } }, 'フォームを開いて送る');
+  scene.append(el('h2', {}, '報告・質問'),
+    el('p', { class: 'small' }, '不具合やまちがいの報告、ドローンの購入や資格についての質問を受け付けています。今いる場所などの情報は自動で入ります。返信がほしいときは、フォームでメールアドレスを書いてください。'),
     el('label', {}, '種類', kind), el('label', {}, '内容', body),
     el('details', {}, el('summary', { class: 'small' }, '自動で入る情報'), ctx),
     ...[send, copy, status, backBtn()].filter(Boolean));
@@ -2528,14 +2545,42 @@ function viewAd() {
 }
 
 function viewEnding() {
+  if (!S.clearDate) { const d = new Date(); S.clearDate = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`; save(); }
+  const row = (k, v) => el('div', { class: 'cert-row' }, el('span', {}, k), el('b', {}, v));
+  const cert = el('div', { class: 'cert' },
+    el('p', { class: 'cert-top' }, '★ はじめてのフライト ★'),
+    el('h2', {}, '初級編　修了証'),
+    el('p', {}, 'あなたは、ドローンを買う前の悩みから、包括申請での撮影の依頼まで、ルールを守って安全に飛ばす手順を学びきりました。'),
+    row('ランク', `Lv.${S.rank}`), row('信頼度', `${S.trust}`),
+    row('悩みノート', `${S.notes.length} / ${Object.keys(WORRIES).length}`),
+    row('称号', `${S.badges.length} / ${Object.keys(BADGES).length}`),
+    el('p', { class: 'cert-date' }, `修了日：${S.clearDate}`));
   scene.append(el('p', { class: 'place' }, 'ENDING'), el('h1', {}, '初フライト成功！'),
     el('p', {}, '悩みノートが埋まった。空から見た町は、思っていたよりずっと広かった。'),
-    el('p', {}, `最後の信頼度：${S.trust}　／　ランク：Lv.${S.rank}`),
+    cert,
+    el('p', { class: 'next-series' }, '初級編はここまで。次のシリーズもお楽しみに！'),
     noticeBox(),
-    el('p', { class: 'small' }, 'このあと、沖の島の撮影などに挑む「上級編」を追加予定です。'),
     el('button', { type: 'button', class: 'primary', onclick: () => setScreen('map') }, '町の地図へ'),
     el('button', { type: 'button', onclick: () => { S._return = 'ending'; setScreen('chapters'); } }, '章をえらんで、もう一度確認する'),
-    el('button', { type: 'button', onclick: () => { S._return = 'ending'; setScreen('report'); } }, '不具合・まちがいを報告する'));
+    el('button', { type: 'button', onclick: () => { S._return = 'ending'; setScreen('report'); } }, '報告・質問'));
+  celebrate();
+}
+function celebrate() { // 紙ふぶきと、画面を横切るドローン
+  const cv = el('canvas', { class: 'celebrate' }); document.body.append(cv);
+  const W = cv.width = innerWidth, H = cv.height = innerHeight, c = cv.getContext('2d');
+  const cols = ['#ffd54a', '#ff6b6b', '#5ad1ff', '#7be07b', '#ffffff'];
+  const bits = Array.from({ length: 90 }, () => ({ x: Math.random() * W, y: -Math.random() * H, s: 4 + Math.random() * 5, v: 1.5 + Math.random() * 2.5, w: Math.random() * 6, col: cols[Math.floor(Math.random() * cols.length)] }));
+  const t0 = performance.now(), dur = 4500;
+  const frame = (t) => {
+    const k = t - t0; c.clearRect(0, 0, W, H);
+    for (const b of bits) { b.y += b.v; b.x += Math.sin((k / 300) + b.w); c.fillStyle = b.col; c.fillRect(Math.round(b.x), Math.round(b.y), b.s, b.s * 0.6); }
+    const dx = -60 + (W + 120) * Math.min(1, k / 3500), dy = H * 0.22 + Math.sin(k / 250) * 8; // ドット風ドローン
+    c.fillStyle = '#d8e2ff'; c.fillRect(dx - 12, dy - 4, 24, 8); c.fillStyle = '#2b3a67'; c.fillRect(dx - 4, dy - 2, 8, 4);
+    c.fillStyle = '#ffffff'; for (const ox of [-18, 12]) c.fillRect(dx + ox, dy - 8 + ((k / 40) % 2 < 1 ? 0 : 1), 8, 2);
+    c.fillStyle = '#ff6b6b'; c.fillRect(dx - 2, dy + 4, 4, 3);
+    if (k < dur && S.screen === 'ending') requestAnimationFrame(frame); else cv.remove();
+  };
+  requestAnimationFrame(frame);
 }
 
 /* ---------- 章の進行 ---------- */
