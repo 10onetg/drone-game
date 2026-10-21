@@ -113,6 +113,15 @@ a.affcard:hover, a.affcard:focus-visible { border-color: var(--sun); }
 .ad { border: 2px dashed var(--line); border-radius: 8px; padding: 22px 12px; text-align: center; color: var(--ink-dim); font-size: 13px; }
 ul.note { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 ul.note li { display: flex; gap: 8px; align-items: baseline; }
+.chbtns { display: flex; gap: 6px; margin-top: 4px; }
+.chbtns button { padding: 3px 10px; font-size: 12px; }
+.review { display: flex; flex-direction: column; gap: 8px; }
+.review p { margin: 0; line-height: 1.7; }
+.review .rq { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.review .rq ul, .review .rq ol { margin: 6px 0; padding-left: 1.2em; }
+.review .rq ul { list-style: none; padding-left: 0.2em; }
+.review li.ok { color: var(--ok); } .review li.ng { color: var(--ink-dim); }
+.review .rnote { color: var(--sun); }
 ul.note .replay { margin-left: auto; padding: 2px 10px; font-size: 12px; flex: none; }
 .scene select, .scene textarea { display: block; margin-top: 4px; font: inherit; color: var(--ink); background: #0b1222; border: 2px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; }
 .scene label { display: block; }
@@ -210,7 +219,7 @@ ul.rec li.done { color: inherit; }
 <script>
 const CHECKED = '2026年10月17日';
 // ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
-const VERSION = 'v1.4.6', VERSION_DATE = '2026年10月20日';
+const VERSION = 'v1.5.0', VERSION_DATE = '2026年10月20日';
 
 /* ---------- BGM ----------
    場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
@@ -405,7 +414,7 @@ const PLACES = [
   { name: '家電店', sub: '空撮用ドローンを買う' },
   { name: '自宅・家電店・ドローンスクール', sub: '買ったあとの手続き' },
   { name: '自宅のパソコン', sub: '100g以上で飛ばせる場所（そのあと農家へ）' },
-  { name: '先輩の家', sub: '飛ばし方のルール' },
+  { name: '先輩の家', sub: '飛ばし方のルール（そのあと草原の入口へ）' },
   { name: '郊外の草原', sub: '空撮デビュー' },
   { name: '砂浜', sub: '海を撮ってみたい' },
   { name: '自宅のパソコン', sub: 'はじめての依頼（そのあと先輩の家・家電店へ）' },
@@ -642,11 +651,19 @@ CH[6] = { place: '自宅 → 農家', title: '第6章　100g以上で飛ばせ�
   { say: ['じゅん先輩からメッセージ', '許可がもらえたね！　場所の次は「飛ばし方」。うちに来て。ルールモンスターが待ってるよ！'] },
 ]};
 
-CH[7] = { place: '先輩の家', title: '第7章　どう飛ばす？', battle: 'monster', steps: [
+CH[7] = { place: '先輩の家', segPlace: { monster: '草原の入口' }, title: '第7章　どう飛ばす？', battle: 'monster', steps: [
   { seg: 'senpai' },
-  { say: ['じゅん先輩', '場所の次は「飛ばし方」。ルールモンスターとのクイズバトルで覚えよう！'] },
+  { say: ['じゅん先輩', '場所の次は「飛ばし方」。空撮デビューの草原に行く前に、ノリオの質問から考えてみよう。'] },
+  { say: ['ノリオ', '日の出は5時25分だけど、5時15分でもう明るいから飛ばしていいよな？'] },
+  { quiz: { q: 'ノリオの言うことは正しい？', opts: [
+    ['明るいからOK', false], ['日の出前なので夜間飛行になる', true]],
+    fb: '「日中」は日の出から日の入りまで。明るくても、日の出前に飛ばすと夜間飛行になります。' } },
+  { note: 'w_sunrise' },
+  { say: ['じゅん先輩', 'それと、草原の入口にルールモンスターが出たらしいんだ。ルールを知らない人は、草原に入れてくれないんだって。'] },
+  { say: ['じゅん先輩', 'クイズで勝負して、たおしてきて！　たおさないと、空撮デビューの草原に入れないよ。'] },
   { seg: 'monster' },
   { say: ['ルールモンスター', 'ガオー！　ルールをわすれた人は、ここを通さないぞ！　クイズで勝負だ！'] },
+
   { multi: { q: 'いつでも、どこでも守ることはどれ？（すべて選んで「決定」）', opts: [
     ['お酒や薬の影響があるときは飛ばさない', true], ['飛ばす前に確認する', true], ['航空機やほかのドローンとぶつからないようにする', true], ['必ず国家資格を持つ', false]],
     fb: 'この3つに加えて、他人に迷惑をかける飛ばし方をしないことも、場所に関係なく守るルールです。' } },
@@ -660,14 +677,9 @@ CH[7] = { place: '先輩の家', title: '第7章　どう飛ばす？', battle: 
     ['散歩している通りすがりの人', true], ['道に止めてある他人の車', true], ['他人の家や電柱・電線', true], ['一緒に来て手伝ってくれている補助者', false], ['草原に生えている木', false]],
     fb: '「第三者」は、飛行にかかわっていない人のこと。補助者など飛行にかかわる人は含みません。「物件」は他人の建物・車・電柱などで、木や土地そのものは含みません。人は動くので、近づいてきたら離れる準備をしておこう。' } },
   { note: 'w_30m' },
-  { say: ['', 'ルールモンスターをたおした！　ルールがしっかり身についた。'] },
-  { seg: 'norio' },
-  { say: ['ノリオ', '日の出は5時25分だけど、5時15分でもう明るいから飛ばしていいよな？'] },
-  { quiz: { q: 'ノリオの言うことは正しい？', opts: [
-    ['明るいからOK', false], ['日の出前なので夜間飛行になる', true]],
-    fb: '「日中」は日の出から日の入りまで。明るくても、日の出前に飛ばすと夜間飛行になります。' } },
-  { note: 'w_sunrise' },
-  { say: ['じゅん先輩', '準備はできた。明日、草原で空撮デビューだ！'] },
+  { say: ['ルールモンスター', '……まいった。ルールはしっかり守るんだぞ。草原へ通るがいい。'] },
+  { say: ['', 'ルールモンスターをたおした！　ルールがしっかり身についた。モンスターは草原の奥へ去っていき、草原に入れるようになった。'] },
+  { say: ['じゅん先輩からメッセージ', 'やったね！　準備はできた。次は草原で空撮デビューだ！'] },
 ]};
 
 CH[8] = { place: '郊外の草原', title: '第8章　空撮デビュー', steps: [
@@ -1177,7 +1189,7 @@ function render() {
   try { updateBgm(); } catch (e) {}
   scene.innerHTML = '';
   scene.scrollTop = 0;
-  ({ title: viewTitle, notice: viewNotice, map: viewMap, room: viewRoom, play: viewPlay, note: viewNote, bag: viewBag, ad: viewAd, ending: viewEnding, chapters: viewChapters, report: viewReport, parts: viewParts, practice: viewPractice, quests: viewQuests, lighthouse: viewLighthouse, sideclear: viewSideClear, gear: viewGear }[S.screen] || viewTitle)();
+  ({ title: viewTitle, notice: viewNotice, map: viewMap, room: viewRoom, play: viewPlay, note: viewNote, bag: viewBag, ad: viewAd, ending: viewEnding, chapters: viewChapters, review: viewReview, report: viewReport, parts: viewParts, practice: viewPractice, quests: viewQuests, lighthouse: viewLighthouse, sideclear: viewSideClear, gear: viewGear }[S.screen] || viewTitle)();
 }
 
 /* ---------- 画面 ---------- */
@@ -1250,7 +1262,7 @@ const TOWN = (() => {
   const rect = (x0, y0, x1, y1, c) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) m[y][x] = c; };
   rect(0, 0, MW - 1, 0, 't'); rect(0, 0, 0, MH - 1, 't'); rect(MW - 1, 0, MW - 1, MH - 1, 't');
   // 北西：郊外の草原と農家
-  rect(1, 1, 11, 6, 'p'); rect(1, 7, 11, 7, 'f'); m[7][9] = 'e'; rect(9, 8, 9, 10, 'r');
+  rect(1, 1, 11, 6, 'p'); rect(1, 7, 12, 7, 'f'); m[7][9] = 'e'; // 草原は柵で囲み、入口（e）からだけ入れる rect(9, 8, 9, 10, 'r');
   // 川（北から海まで）と河川敷
   rect(13, 1, 14, 32, 'w'); rect(15, 2, 16, 9, 's');
   // 鉄塔（高圧線）
@@ -1298,6 +1310,8 @@ const NPCS = [
   { id: 'granny', x: 9, y: 22, name: '町のおばあさん', color: '#c9a7e8' },
   { id: 'beach', x: 8, y: 31, name: '海岸の管理人', color: '#6fc3e0', ch: 9 },
   { id: 'board', kind: 'board', x: 23, y: 26, name: '依頼ボード' },
+  // 草原の入口をふさぐ。第7章でたおすまで、草原に入れない
+  { id: 'monster', x: 9, y: 8, name: 'ルールモンスター', show: () => S.cleared < 7 || S.inCh === 7 },
   { id: 'chair', x: 24, y: 17, name: '商店街の会長', color: '#d08a4a', show: () => S.cleared >= 10 },
   { id: 'tourism', x: 20, y: 31, name: '観光協会の人', color: '#5fb0a0', show: () => S.cleared >= 10 },
   { id: 'farmer2', x: 7, y: 9, name: '農家のおじいさん', color: '#8fb05a', show: () => S.cleared >= 10 },
@@ -1340,7 +1354,7 @@ const ROOMS = {
       npcs: [{ id: 'farmer', name: '農家のおじいさん', x: 5, y: 3, color: '#8fb05a', before: 'ドローンかい？　まずは、どこなら飛ばしてよいか調べてからおいで。', after: '草原は好きに使いなされ。' }] },
   } },
   7: { name: '先輩の家', rows: ['WWWWWWWWWWW', 'WSSFFFFFSSW', 'WFFFFFFFFFW', 'WFFFFFFFFFW', 'WFFFFFFFFFW', 'WFFFFFFFFFW', 'WFFFFFFFFFW', 'WFFFFFFFFFW', 'WWWWWxWWWWW'],
-    npcs: [{ ...SENPAI, x: 3, y: 3 }, { id: 'monster', name: 'ルールモンスター', x: 6, y: 2, color: '#9b6bff', before: 'グルル……先輩と話してから来い！', after: '……まいった。ルールはしっかり守るんだぞ。' }, { ...NORIO, x: 8, y: 6 }] },
+    npcs: [{ ...SENPAI, x: 3, y: 3, after: '草原の入口のルールモンスター、たのんだよ！' }, { ...NORIO, x: 8, y: 6 }] },
   8: { name: '郊外の草原', rows: FIELD,
     npcs: [{ ...SENPAI, x: 5, y: 3 }, { id: 'police', name: '警察官', x: 8, y: 5, color: '#3d5fa8', before: '（パトロール中のようだ）', after: 'お気をつけて。' }] },
   9: { name: '砂浜', rows: ['wwwwwwwwwww', 'wwwwwwwwwww', 'wwwwwwwwwww', 'sssssssssss', 'sssssssssss', 'sssssssssss', 'sssssssssss', 'ggggggggggg', 'tttttxttttt'],
@@ -1472,7 +1486,13 @@ function arrive() {
 
 function enterDoor(x, y) {
   M.held = null;
-  if (TOWN[y][x] === 'e') { tryChapter(pickCh(GATE_CHS), '郊外の草原'); return; }
+  if (TOWN[y][x] === 'e') {
+    // 草原での章があるときは章を始める。ないときは、柵の入口を通って草原を歩ける
+    if (GATE_CHS.includes(S.inCh) || (S.inCh == null && GATE_CHS.includes(targetCh()) && S.cleared < targetCh())) { tryChapter(pickCh(GATE_CHS), '郊外の草原'); return; }
+    S.pos = S.pos.y > y ? { x, y: y - 1, dir: 'up' } : { x, y: y + 1, dir: 'down' }; save();
+    if (S.pos.y < y) say([['', '草原に入った。広々としている。']]);
+    return;
+  }
   const key = DOORS[x + ',' + y], name = BUILDINGS.find((b) => b.key === key).name;
   if (key === 'parts') { S.screen = 'parts'; save(); render(); return; }
   if (key === 'lighthouse') {
@@ -1535,6 +1555,12 @@ function interact() {
     if (n.id === 'senpai') { say([[n.name, `次は${PLACES[targetCh()].name}に行ってみよう。悩みノートも見返してね。`]]); return; }
     if (n.id === 'beach') { say([[n.name, 'ここで飛ばしたいなら、まずは空撮デビューを済ませておいで。']]); return; }
     if (n.id === 'board') { setScreen('quests'); return; }
+    if (n.id === 'monster') {
+      if (S.inCh === 7 && S.ch === 7 && segOf(S.step) === 'monster') { if (curSeg() === 'monster') S.step++; S.screen = 'play'; save(); render(); return; } // バトル開始（とちゅうからの再開も）
+      const lines = [[n.name, S.inCh === 7 ? 'グルル……先輩の話を聞いてから来い！' : 'ガオー！　ルールを知らない人は、この先の草原には通さないぞ！']];
+      if (S.inCh == null && S.cleared < 6) lines.push(['', '（もっとルールを覚えたら、先輩がたおし方を教えてくれそうだ）']);
+      say(lines); return;
+    }
     const sq = sideReady(n.id);
     if (sq && n.id === 'norio') { startChapter(sq); return; }
     if (sq) { say([[n.name, `（${SIDE[sq].title.replace('サブ：', '')}）　ちょっとお願いがあるんだけど、聞いてもらえる？`]], [['聞く', () => startChapter(sq)], ['あとで', null]]); return; }
@@ -1603,7 +1629,7 @@ function showHint() {
     return;
   }
   const ch = targetCh(), p = PLACES[ch];
-  box.append(el('p', { class: 'small hint' }, S.cleared >= CH.length - 1 ? 'すべてクリア！　町を自由に歩けます。' : (S.inCh === 6 && curSeg() === 'farmer') ? '目的：農家（草原の持ち主）' : (S.inCh === 10 && curSeg() === 'senpai') ? '目的：先輩の家（標準マニュアル02と補助者）' : (S.inCh === 10 && curSeg() === 'chair') ? '目的：商店街（家電店）で撮影' : (S.inCh != null && stepsOf(S.inCh)[S.step]?.needSign) ? (S.signRead ? '目的：家に戻って、ノリオに伝える' : '目的：公園の入口の看板を確かめる') : `目的：${p.name}（${p.sub}）`));
+  box.append(el('p', { class: 'small hint' }, S.cleared >= CH.length - 1 ? 'すべてクリア！　町を自由に歩けます。' : (S.inCh === 6 && curSeg() === 'farmer') ? '目的：農家（草原の持ち主）' : (S.inCh === 7 && segOf(S.step) === 'monster') ? '目的：草原の入口のルールモンスター（町の北西）' : (S.inCh === 10 && curSeg() === 'senpai') ? '目的：先輩の家（標準マニュアル02と補助者）' : (S.inCh === 10 && curSeg() === 'chair') ? '目的：商店街（家電店）で撮影' : (S.inCh != null && stepsOf(S.inCh)[S.step]?.needSign) ? (S.signRead ? '目的：家に戻って、ノリオに伝える' : '目的：公園の入口の看板を確かめる') : `目的：${p.name}（${p.sub}）`));
 }
 
 function draw() {
@@ -1704,6 +1730,7 @@ function mapGoals() {
   if (S.cleared >= CH.length - 1 && S.inCh == null) return [];
   if (S.needPractice) return S.items.includes(PRACTICE_REC) ? B('home') : B('school');
   if (S.inCh === 6 && curSeg() === 'farmer') return B('farm');
+  if (S.inCh === 7 && segOf(S.step) === 'monster') return [{ x: 9, y: 8, w: 1, h: 1 }];
   if (S.inCh === 10 && curSeg() === 'senpai') return B('senpai');
   if (S.inCh === 10 && curSeg() === 'chair') return B('shop');
   if (S.inCh != null && stepsOf(S.inCh)[S.step]?.needSign) { if (S.signRead) return B('home'); const [x, y] = Object.keys(SIGNS)[0].split(',').map(Number); return [{ x, y, w: 1, h: 1 }]; }
@@ -2291,7 +2318,7 @@ function backBtn() {
   return el('button', { type: 'button', onclick: () => { S.screen = S._return || 'map'; save(); render(); } }, 'もどる');
 }
 function openPanel(name) {
-  if (!['note', 'bag', 'about', 'chapters', 'report', 'gear', 'quests'].includes(S.screen)) S._return = S.screen;
+  if (!['note', 'bag', 'about', 'chapters', 'review', 'report', 'gear', 'quests'].includes(S.screen)) S._return = S.screen;
   if (name === 'about') { S.screen = 'about'; renderStatus(); viewAbout(); return; }
   setScreen(name);
 }
@@ -2312,15 +2339,42 @@ function replayChapter(n) {
   startChapter(n, sub);
 }
 function viewChapters() {
-  const box = el('div', { class: 'choices' });
+  const ul = el('ul', { class: 'note rec' });
   CH.forEach((c, n) => {
-    const ok = n <= S.cleared && S.inCh == null;
-    box.append(el('button', { type: 'button', ...(ok ? {} : { disabled: '' }), onclick: () => replayChapter(n) },
-      `${c.title}　―　${PLACES[n].sub}` + (n > S.cleared ? '（まだクリアしていません）' : '')));
+    const done = n <= S.cleared;
+    ul.append(el('li', { class: done ? 'done' : '' },
+      el('b', {}, `${c.title}`), el('span', { class: 'small' }, PLACES[n].sub + (done ? '' : '（まだクリアしていません）')),
+      done ? el('span', { class: 'chbtns' },
+        el('button', { type: 'button', class: 'small', onclick: () => { S._review = n; setScreen('review'); } }, '読み返す'),
+        el('button', { type: 'button', class: 'small', ...(S.inCh == null ? {} : { disabled: '' }), onclick: () => replayChapter(n) }, 'もう一度遊ぶ')) : null));
   });
   scene.append(el('h2', {}, '章をえらんで、もう一度確認する'),
-    el('p', { class: 'small' }, S.inCh != null ? '今は章のとちゅうです。章を終えてから選んでください。' : 'クリアした章を、最初からもう一度遊べます。進み具合やおこづかいは変わりません。'),
-    box, backBtn());
+    el('p', { class: 'small' }, 'クリアした章は、いつでも「読み返す」で会話とクイズの答え・解説を見られます。' + (S.inCh != null ? '「もう一度遊ぶ」は、今の章を終えてから選べます。' : '「もう一度遊ぶ」では最初から遊べます。進み具合やおこづかいは変わりません。')),
+    ul, backBtn());
+}
+// クリアした章の読み返し（会話・クイズの正解と解説）。進み具合は変わらない
+function viewReview() {
+  const n = S._review, c = CH[n];
+  if (c == null || n > S.cleared) { setScreen('chapters'); return; }
+  const box = el('div', { class: 'review' });
+  const line = (who, text) => box.append(el('p', {}, who ? el('b', {}, who + '：') : null, text));
+  const qa = (label, q, opts, fb) => box.append(el('div', { class: 'rq' }, el('b', {}, label + q),
+    el('ul', {}, ...opts.map(([t, ok]) => el('li', { class: ok ? 'ok' : 'ng' }, (ok ? '○ ' : '× ') + t))), fb ? el('p', { class: 'small' }, '解説：' + fb) : null));
+  for (const st of c.steps) {
+    if (st.say) line(st.say[0], st.say[1]);
+    else if (st.note) box.append(el('p', { class: 'small rnote' }, `📓 悩み解決：「${WORRIES[st.note]}」`));
+    else if (st.get) box.append(el('p', { class: 'small' }, `🎒「${st.get}」を手に入れた`));
+    else if (st.quiz) qa('📝 ', st.quiz.q, st.quiz.opts, st.quiz.fb);
+    else if (st.multi) qa('📝 ', st.multi.q, st.multi.opts, st.multi.fb);
+    else if (st.choice) box.append(el('div', { class: 'rq' }, el('b', {}, '❓ ' + st.choice.q),
+      el('ul', {}, ...st.choice.opts.map((o) => el('li', { class: o.ok ? 'ok' : 'ng' }, (o.ok ? '○ ' : '× ') + o.text, el('br'), el('span', { class: 'small' }, o.fb || ''))))));
+    else if (st.order) box.append(el('div', { class: 'rq' }, el('b', {}, '📝 ' + st.order.q), el('ol', {}, ...st.order.items.map((t) => el('li', {}, t))), st.order.fb ? el('p', { class: 'small' }, '解説：' + st.order.fb) : null));
+    else if (st.dips) box.append(el('div', { class: 'rq' }, el('b', {}, '🗺 ' + st.dips.q), el('p', { class: 'small' }, '解説：' + st.dips.fb)));
+    else if (st.fly) box.append(el('div', { class: 'rq' }, el('b', {}, '🕹 操縦：' + st.fly.q), st.fly.fb ? el('p', { class: 'small' }, st.fly.fb) : null));
+    else if (st.has) line(st.has.yes[0], st.has.yes[1]);
+  }
+  scene.append(el('p', { class: 'place' }, '読み返し'), el('h2', {}, c.title), box,
+    el('button', { type: 'button', onclick: () => setScreen('chapters') }, '章の一覧にもどる'));
 }
 
 /* ---------- 不具合・まちがいの報告 ---------- */
@@ -2436,7 +2490,7 @@ function gameOver() {
 }
 
 function header() {
-  const h = [el('p', { class: 'place' }, CH[S.ch].place), el('h2', {}, CH[S.ch].title)];
+  const h = [el('p', { class: 'place' }, CH[S.ch].segPlace?.[segOf(S.step)] || CH[S.ch].place), el('h2', {}, CH[S.ch].title)];
   if (inBattle()) h.push(battlePanel());
   return h;
 }
