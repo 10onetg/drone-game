@@ -219,7 +219,7 @@ ul.rec li.done { color: inherit; }
 <script>
 const CHECKED = '2026年10月17日';
 // ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
-const VERSION = 'v1.6.0', VERSION_DATE = '2026年10月21日';
+const VERSION = 'v1.7.0', VERSION_DATE = '2026年10月21日';
 
 /* ---------- BGM ----------
    場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
@@ -314,6 +314,12 @@ const AFFILIATE = {
   aerial: { title: 'リモートID搭載の空撮用ドローン（100g以上）', links: [
     { label: 'おすすめのリモートID搭載ドローン 1', name: '', point: '', url: 'https://link.amazon/B04z0qfQK' },
     { label: 'おすすめのリモートID搭載ドローン 2', name: '', point: '', url: 'https://link.amazon/B0ahM0VQm' }] },
+  highspec: { title: 'ハイスペック空撮機', links: [
+    { label: 'おすすめのハイスペック空撮機', name: '', point: '', url: 'https://link.amazon/B0hufgRHh' }] },
+  'プロペラガード': { title: 'プロペラガード（機体に合ったものを選ぶ）', links: [
+    { label: 'リモートID搭載ドローン 1 用のプロペラガード', name: '', point: '', url: 'https://link.amazon/B07O2rmgz' },
+    { label: 'リモートID搭載ドローン 2 用のプロペラガード', name: '', point: '', url: 'https://link.amazon/B01gmRQM2' },
+    { label: 'ハイスペック空撮機用のプロペラガード', name: '', point: '', url: 'https://link.amazon/B0exrHgg7' }] },
   '風速計': { title: '携帯できる風速計', links: [
     { label: 'おすすめの風速計', name: '', point: '', url: 'https://link.amazon/B0bSv9xjQ' }] },
   'ランディングパッド': { title: 'ドローン用ランディングパッド', links: [
@@ -344,6 +350,8 @@ const GEAR_CHECK = {
   '教本': 'ゲームで覚えたルールや操縦の基本を、本できちんと学び直せる。このゲームの作者が所属する団体が発行している教科書です。',
   toy: '100g未満か／技適マークがあるか／プロペラガードが付いていると、屋内でぶつけても安心。',
   aerial: '技適マークがあるか／リモートIDが内蔵されているか（なければ後付けが必要）。100g以上なので、買ったら機体登録を忘れずに。',
+  highspec: '技適マークがあるか／リモートIDが内蔵されているか。風に強い機体でも、取扱説明書で飛ばせる風速を確かめよう。',
+  'プロペラガード': 'プロペラガードは機体ごとに形がちがうので、持っている機体に合うものを選ぶ。人や物から30m未満で飛ばすときは付けることになっている。',
   '風速計': '許可を取るときに使う標準マニュアルには、風速5m/sという基準が書かれている。それを参考にしよう。',
   'カラーコーン': '飛行範囲に人が入らないよう、区画を示す目印に使える。練習のときは、旋回や八の字飛行の目印にもなる。折りたたみなら持ち運びやすい。',
   'サインボード': '通りかかった人に「今ドローンを飛ばしている」と知らせられる。カラーコーンと一緒に置くと、飛行範囲に入らないようお願いしやすい。',
@@ -384,10 +392,10 @@ const BADGES = {
   signs: ['看板はかせ', '町の看板を全部読む'],
   parts: ['そなえあれば', 'パーツ屋の道具を全部そろえる'],
   notes: ['悩み解決マスター', '悩みノートを全部うめる'],
-  norio: ['ノリオの先生', 'ノリオのやらかしを、5回とも止める'],
+  norio: ['ノリオの先生', 'ノリオのやらかしを止める'],
   treasure: ['たからさがし', '町にかくれたものを、全部見つける'],
   secret: ['ひみつの場所', '灯台の中に入る'],
-  highspec: ['ハイスペックパイロット', 'ハイスペック機を2台ともそろえる'],
+  highspec: ['ハイスペックパイロット', 'ハイスペック機 SKY PRO を手に入れる'],
   side: ['町のドローン便利屋', 'サブストーリーの依頼を全部クリアする'],
 };
 
@@ -1043,7 +1051,7 @@ CH[11] = { place: '郊外の草原', title: '終章　もしものとき', steps
 /* ---------- サブストーリー「町のドローン便利屋」 ----------
    メインの物語とは別に遊べる依頼。クリアしなくてもメインには影響しない。
    CH['q_...'] として登録し、章と同じしくみで進める（side: true） */
-const SKYPRO = 'ハイスペック機 SKY PRO', THERMO = '赤外線ドローン THERMO';
+const SKYPRO = 'ハイスペック機 SKY PRO';
 const SIDE = {
   q_lost: { who: '落とし物', place: '河川敷の草むら', title: 'サブ：落とし物のドローン', cond: () => S.cleared >= 5, condText: '第5章のあと', steps: [
     { say: ['', '草むらに、ドローンが落ちている。プロペラが1枚折れている。機体には、登録記号のラベルが貼ってある。'] },
@@ -1076,17 +1084,6 @@ const SIDE = {
     ]}},
     { fly: { q: '屋根の★3か所を撮影しよう', fb: 'おばあさん「瓦が1枚ずれてるのが分かったよ。これで屋根屋さんに頼めるねえ。」' } },
     { money: 30000, msg: 'おばあさんからお礼を受け取った' },
-  ]},
-  q_cat: { who: '町のおばあさん', place: '公園', title: 'サブ：迷子のミケ', cond: () => S.cleared >= 10 && S.sideDone.includes('q_roof'), condText: '「おばあさんの屋根」のあと', steps: [
-    { say: ['町のおばあさん', 'うちのネコのミケが、帰ってこないんだよ……。公園の植えこみのあたりで見たって人がいるんだけど。'] },
-    { quiz: { q: 'まだ日の入り前。公園で飛ばす前に、まずすることは？', opts: [
-      ['公園の管理事務所に、ネコを探すために飛ばしてよいか相談する', true], ['人助けだから、どこでも自由に飛ばしてよい', false]],
-      fb: 'あの公園は、条例でドローンが禁止されています。人助けでも、まず管理者に相談して許可をもらいます。日の入り後は夜間飛行になるので、承認がないなら明るいうちに。' } },
-    { say: ['', '管理事務所に事情を話すと、「人が少ない時間なら」と許可してくれた。'] },
-    { gate: THERMO, msg: '植えこみの中は、ふつうのカメラでは葉っぱしか映らない……。体の温かさを映せる赤外線カメラがあれば、見つけられるかもしれない。（パーツ屋の「赤外線ドローン THERMO」が必要）' },
-    { fly: { thermal: true, q: '赤外線カメラで、植えこみの★3か所を確かめよう', fb: '3つ目の植えこみに、ぽつんと温かい点が映った。……ミケだ！' } },
-    { say: ['町のおばあさん', 'ミケ！　よかった、よかった。本当にありがとうねえ。'] },
-    { money: 10000, msg: 'おばあさんからお礼を受け取った' },
   ]},
   q_month1: { who: '商店街の会長', place: '商店街', title: 'サブ：商店街の月例撮影（11月）', cond: () => S.cleared >= 10, condText: '第10章のあと', steps: [
     { say: ['商店街の会長', '今月もお願いします！　……ただ、今朝は小雨が降っていますね。'] },
@@ -1132,16 +1129,6 @@ const SIDE = {
     { fly: { wind: { x: 0.55, y: 0 }, q: '風に流されないように、★3か所を撮影しよう（風が右から左へ吹いている）', fb: '観光協会の人「迫力のある波の映像です！　さすがプロ機ですね。」' } },
     { money: 150000, msg: '撮影代を受け取った' },
   ]},
-  q_solar: { who: '農家のおじいさん', place: '畑', title: 'サブ：ソーラーパネルの点検', cond: () => S.cleared >= 10, condText: '第10章のあと', steps: [
-    { say: ['農家のおじいさん', 'うちの畑のソーラーパネル、最近どうも発電が減ってのう。どこか壊れとらんか、調べてもらえんか。'] },
-    { quiz: { q: '赤外線カメラで、パネルの故障（熱くなっている所）を探すのに向いているのは？', opts: [
-      ['よく晴れて、日がしっかり当たっている昼間', true], ['雨上がりの曇りの日', false], ['日の出前の、すずしい時間', false]],
-      fb: '赤外線カメラは温度の差を映します。日がよく当たって発電しているときでないと、故障した所との温度差が出ません。雨上がりや曇り、風の強い日は、差が出にくくなります。' } },
-    { gate: THERMO, msg: 'ふつうのカメラでは、パネルの熱の異常は見えない……。パーツ屋の「赤外線ドローン THERMO」が必要だ。' },
-    { fly: { thermal: true, q: '赤外線カメラで、パネルの★3か所を調べよう', fb: '赤外線の画面で、1枚のパネルの一部だけが白く光っている。熱くなっている所（ホットスポット）だ！' } },
-    { say: ['農家のおじいさん', 'ほう、ここが悪かったんじゃな。業者さんに直してもらうよ。助かったわい。'] },
-    { money: 200000, msg: '点検代を受け取った' },
-  ]},
   // ノリオの「やらかし」：止めるたびにノリオが成長する
   n_beer: { who: 'ノリオ', place: '河川敷', title: 'ノリオ：のんびりフライト？', norio: [16, 8], cond: () => S.cleared >= 4, condText: '第4章のあと', steps: [
     { say: ['ノリオ', 'いい天気だなあ！　ビールを飲みながら、のんびり飛ばすぞ～。'] },
@@ -1149,33 +1136,7 @@ const SIDE = {
       { text: '少しなら大丈夫だよね', ok: false, trust: -10, retry: true, fb: '量に関係なく、お酒の影響があるうちは飛ばしてはいけません。' },
       { text: '「お酒を飲んだら飛ばしちゃダメ！」と止める', ok: true, trust: 10, fb: 'アルコールや薬の影響で正常に飛ばせないおそれがある間は、飛ばしてはいけない（航空法）。違反すると罰則もあります。車の運転と同じだね。' },
     ]}},
-    { say: ['ノリオ', 'そっか……。じゃあ今日は見るだけにして、ジュースにするよ。'] },
-  ]},
-  n_airport: { who: 'ノリオ', place: '空港の近く', title: 'ノリオ：空港の近くで', norio: [26, 9], cond: () => S.cleared >= 6 && S.sideDone.includes('n_beer'), condText: '第6章のあと', steps: [
-    { say: ['ノリオ', '飛行機の写真を撮りたくてさ。このトイドローンは100g未満だから、空港の近くでも平気だよな？'] },
-    { quiz: { q: 'ノリオの言うことは正しい？', opts: [['100g未満なら空港の近くでも自由', false], ['空港の周辺は、100g未満の機体でも国の許可が必要', true]],
-      fb: '空港の周辺の空域は、100g未満の「模型航空機」でも許可が必要です。飛行機にぶつかったら大事故になります。' } },
-    { say: ['ノリオ', 'うわ、危なかった……。写真は展望デッキから撮るよ。'] },
-  ]},
-  n_matsuri: { who: 'ノリオ', place: '駅前', title: 'ノリオ：お祭りを上から', norio: [26, 26], cond: () => S.cleared >= 7 && S.sideDone.includes('n_airport'), condText: '第7章のあと', steps: [
-    { say: ['ノリオ', 'あさっての駅前のお祭り、上から撮ったら最高だろ！　昼間だし、許可なんていらないよな？'] },
-    { quiz: { q: 'お祭りの上空で飛ばすには？', opts: [['昼間なら許可はいらない', false], ['イベントの上空は、場所と日にちを決めて国の承認を取る必要がある', true]],
-      fb: 'お祭りなど人が集まるイベントの上空は、承認が必要な飛ばし方です。包括申請ではできず、場所と日にちを決めて申請します。主催者の了解も必要です。' } },
-    { say: ['ノリオ', 'そっか、主催者さんにも相談してみるよ。'] },
-  ]},
-  n_fpv: { who: 'ノリオ', place: '砂浜', title: 'ノリオ：海外のFPVドローン', norio: [30, 31], cond: () => S.cleared >= 8 && S.sideDone.includes('n_matsuri'), condText: '第8章のあと', steps: [
-    { say: ['ノリオ', '見てくれ！　海外の通販で買ったFPVドローン。ゴーグルをつけると、鳥みたいに飛べるんだ！　映像は5.8GHzで飛ばすらしい。'] },
-    { quiz: { q: 'このまま日本で使っていい？', opts: [
-      ['5.8GHz帯の映像を飛ばすには、アマチュア無線などの資格と、無線局の開局が必要', true], ['通販で売っているなら、そのまま使える', false]],
-      fb: '日本では、5.8GHz帯の電波を使うには無線の資格と開局の手続きが必要です（電波法）。仕事で使うなら、別の資格がいります。技適マークのない機器を使うのも違法になることがあります。' } },
-    { say: ['ノリオ', 'まじか……。アマチュア無線の勉強から始めるよ！'] },
-  ]},
-  n_drop: { who: 'ノリオ', place: '大通りのそば', title: 'ノリオ：ボール落とし', norio: [8, 12], cond: () => S.cleared >= 10 && S.sideDone.includes('n_fpv'), condText: '第10章のあと', steps: [
-    { say: ['ノリオ', 'ドローンからボールを落として、キャッチして遊ぼうぜ！'] },
-    { quiz: { q: '飛ばしているドローンから物を落とすのは？', opts: [['軽いボールなら自由', false], ['「物件投下」になり、国の承認が必要', true]],
-      fb: '飛行中に物を落とすのは「物件投下」で、承認が必要な飛ばし方です。水や農薬をまくのも含まれます。' } },
-    { say: ['ノリオ', '……おれ、今まで本当に何も知らなかったんだな。ちゃんと勉強して、国家資格を取るよ！　それと、親せきの会社が空撮を頼みたいって。お前を紹介しといたぜ！'] },
-    { money: 50000, msg: 'ノリオの紹介で、空撮の仕事をした' },
+    { say: ['ノリオ', 'そっか……。じゃあ今日は見るだけにして、ジュースにするよ。おれ、知らないことだらけだな。ちゃんとルールを勉強するよ！'] },
     { badge: 'norio' },
   ]},
 };
@@ -1193,7 +1154,6 @@ const HIDDEN = {
 /* ---------- ハイスペック機（パーツ屋の機体コーナー） ---------- */
 const DRONES = [
   { name: SKYPRO, price: 240000, desc: '大きなセンサーのカメラと、強い風に負けないモーターを積んだプロ機。取扱説明書で、風速12m/sまで飛行できると確かめられる。バッテリーも長持ち（飛行ミニゲームで減り方が半分）。', only: 'これでしかできない依頼：「風の海を撮れ」（観光協会・150,000円）' },
-  { name: THERMO, price: 260000, desc: '温度を映す赤外線カメラを積んだ点検用ドローン。ふつうのカメラでは見えない、熱くなった所や、体温のある生き物が見える。', only: 'これでしかできない依頼：「ソーラーパネルの点検」（農家・200,000円）、「迷子のミケ」（おばあさん）' },
 ];
 
 /* ---------- 状態 ---------- */
@@ -1258,8 +1218,9 @@ function render() {
 /* ---------- 画面 ---------- */
 function noticeBox() {
   return el('div', { class: 'notice' },
-    el('p', {}, 'このゲームは、ドローンを飛ばすまでの手順を楽しく学ぶためのものです。内容は航空法などの法律に沿って作っていますが、法律は変わることがあります。また、飛ばす場所によっては都道府県や市町村の条例で禁止されている場合があります。実際に飛ばすときは、必ず国土交通省の最新の情報と、飛ばす場所の条例を確認してください。'),
-    el('p', { class: 'small' }, `（内容の確認日：${CHECKED}）　`, el('a', { href: MLIT, target: '_blank', rel: 'noopener', style: 'color:var(--sun)' }, '国土交通省「無人航空機の飛行ルール」')));
+    el('p', {}, 'このゲームは、ドローンを飛ばすまでの手順を楽しく学べるよう、航空法などをもとに説明を簡単にしています。法律や条例は変わることがあり、場所によっては条例で飛行が禁止されていることもあります。実際に飛ばすときは、教本や国土交通省の最新情報、飛ばす場所の条例を確かめ、ルールを守って安全に飛行してください。'),
+    el('p', { class: 'small' }, `（内容の確認日：${CHECKED}）　`, el('a', { href: MLIT, target: '_blank', rel: 'noopener', style: 'color:var(--sun)' }, '国土交通省「無人航空機の飛行ルール」')),
+    AFFILIATE['教本'].links[0].url ? el('p', { class: 'small' }, '📘 おすすめの教本：', el('a', { href: AFFILIATE['教本'].links[0].url, target: '_blank', rel: 'noopener sponsored', style: 'color:var(--sun)' }, 'ドローンの教本（Amazonで見る）'), '　（広告）') : null);
 }
 
 function viewTitle() {
@@ -1379,11 +1340,10 @@ const NPCS = [
   { id: 'monster', x: 9, y: 8, name: 'ルールモンスター', show: () => S.cleared < 7 || S.inCh === 7 },
   { id: 'chair', x: 24, y: 17, name: '商店街の会長', color: '#d08a4a', show: () => S.cleared >= 10 },
   { id: 'tourism', x: 20, y: 31, name: '観光協会の人', color: '#5fb0a0', show: () => S.cleared >= 10 },
-  { id: 'farmer2', x: 7, y: 9, name: '農家のおじいさん', color: '#8fb05a', show: () => S.cleared >= 10 },
 ];
 // サブストーリーの依頼をくれる人（上から順に）
-const SIDE_NPCS = { granny: ['q_roof', 'q_cat'], chair: ['q_month1', 'q_month2', 'q_month3'], tourism: ['q_windy'], farmer2: ['q_solar'],
-  norio: ['n_beer', 'n_airport', 'n_matsuri', 'n_fpv', 'n_drop'] };
+const SIDE_NPCS = { granny: ['q_roof'], chair: ['q_month1', 'q_month2', 'q_month3'], tourism: ['q_windy'],
+  norio: ['n_beer'] };
 function sideNext(npcId) { return (SIDE_NPCS[npcId] || []).find((id) => !S.sideDone.includes(id)); }
 function sideReady(npcId) { const id = sideNext(npcId); return id && SIDE[id].cond() && S.inCh == null ? id : null; }
 const TOWNMAP = { g: TOWN, w: MW, h: MH, npcs: NPCS, buildings: BUILDINGS, doors: DOORS, room: false };
@@ -1770,6 +1730,7 @@ function draw() {
   }
   for (const b of M.map.buildings) {
     const sx = (b.x - camX) * ts, sy = (b.y - camY) * ts;
+    if (b.key === 'lighthouse') { drawLighthouse(c, sx, sy, b, ts); continue; }
     c.fillStyle = '#e8e2d4'; c.fillRect(sx, sy + ts * 0.9, b.w * ts, b.h * ts - ts * 0.9);
     c.fillStyle = b.color; c.fillRect(sx - 2, sy, b.w * ts + 4, ts * 1.1);
     c.fillStyle = '#1b2440';
@@ -1839,6 +1800,28 @@ function mapGoals() {
   if ([2, 6, 10].includes(ch)) return B('home');
   return BUILDINGS.filter((b) => b.key && BLD_CHS[b.key]?.includes(ch));
 }
+// 灯台：白と赤のしま模様の塔に、光る灯室と赤い屋根（上に少しはみ出して高く見せる）
+function drawLighthouse(c, sx, sy, b, ts) {
+  const cx = sx + b.w * ts / 2, base = sy + b.h * ts, top = sy - ts * 0.9;
+  const wB = ts * 1.5, wT = ts * 0.9, H = base - top;
+  c.fillStyle = TILE_COLOR.g; c.fillRect(sx, sy, b.w * ts, b.h * ts); // 敷地は草地
+  c.fillStyle = '#8a8070'; c.fillRect(cx - ts * 1.1, base - ts * 0.35, ts * 2.2, ts * 0.35); // 土台
+  const bands = 5;
+  for (let i = 0; i < bands; i++) {
+    const y0 = top + H * i / bands, y1 = top + H * (i + 1) / bands;
+    const w0 = wT + (wB - wT) * i / bands, w1 = wT + (wB - wT) * (i + 1) / bands;
+    c.fillStyle = i % 2 ? '#d84040' : '#f4f4f0';
+    c.beginPath(); c.moveTo(cx - w0 / 2, y0); c.lineTo(cx + w0 / 2, y0); c.lineTo(cx + w1 / 2, y1 - (i === bands - 1 ? ts * 0.35 : 0)); c.lineTo(cx - w1 / 2, y1 - (i === bands - 1 ? ts * 0.35 : 0)); c.closePath(); c.fill();
+  }
+  c.fillStyle = '#2a2a33'; c.fillRect(cx - wT / 2 - ts * 0.15, top - ts * 0.08, wT + ts * 0.3, ts * 0.12); // 回廊
+  const lit = Math.floor((M.t || 0) / 600) % 2 === 0;
+  if (lit) { c.fillStyle = 'rgba(255,230,120,.35)'; c.beginPath(); c.moveTo(cx, top - ts * 0.35); c.lineTo(cx + ts * 1.6, top - ts * 0.75); c.lineTo(cx + ts * 1.6, top + ts * 0.05); c.closePath(); c.fill(); }
+  c.fillStyle = lit ? '#ffe27a' : '#e0c060'; c.fillRect(cx - wT * 0.35, top - ts * 0.55, wT * 0.7, ts * 0.45); // 灯室
+  c.fillStyle = '#b02a2a'; c.beginPath(); c.moveTo(cx - wT * 0.45, top - ts * 0.55); c.lineTo(cx + wT * 0.45, top - ts * 0.55); c.lineTo(cx, top - ts * 0.95); c.closePath(); c.fill(); // 屋根
+  c.fillStyle = '#3a2a1c'; c.fillRect(cx - ts * 0.22, base - ts * 0.85, ts * 0.44, ts * 0.5); // 入口
+  c.fillStyle = '#1b2440'; c.font = `${Math.round(ts * 0.42)}px DotGothic16, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.lineWidth = 3; c.strokeStyle = 'rgba(255,255,255,.85)'; c.strokeText(b.name, sx + ts * 0.45, base - ts * 0.6); c.fillText(b.name, sx + ts * 0.45, base - ts * 0.6);
+}
 function closeTownMap() { cancelAnimationFrame(M.ovLoop); document.querySelector('.mapov')?.remove(); M.canvas?.focus?.(); }
 function openTownMap() {
   if (S.screen !== 'map' || document.querySelector('.mapov')) return;
@@ -1849,7 +1832,7 @@ function openTownMap() {
   const goals = mapGoals(), jobs = TOWNMAP.npcs.filter((n) => sideReady(n.id) || (n.kind === 'board' && SIDE_ORDER.some((id) => !S.sideDone.includes(id) && SIDE[id].cond())));
   const ov = el('div', { class: 'mapov', role: 'dialog', 'aria-label': '町の全体マップ', onclick: closeTownMap },
     el('p', { class: 'place' }, '町の全体マップ'), cv,
-    el('div', { class: 'legend' }, el('span', {}, '⚪ 今いる場所'), goals.length ? el('span', {}, '⭐ 次の目的地') : null, jobs.length ? el('span', {}, '！ 依頼がある人') : null, S.treasureMap ? el('span', {}, '✦ 宝の地図の印') : null),
+    el('div', { class: 'legend' }, el('span', {}, '⚪ 今いる場所'), goals.length ? el('span', {}, '⭐ 次の目的地') : null, el('span', {}, `🪧 看板（黄色はまだ読んでいない・${S.signs.length}/${Object.keys(SIGNS).length}）`), jobs.length ? el('span', {}, '！ 依頼がある人') : null, S.treasureMap ? el('span', {}, '✦ 宝の地図の印') : null),
     el('p', { class: 'small' }, $('townmsg')?.textContent || ''),
     el('button', { type: 'button' }, 'とじる'));
   document.body.append(ov);
@@ -1868,6 +1851,13 @@ function openTownMap() {
     for (const b of BUILDINGS) { c.fillStyle = b.color; c.fillRect(b.x * s, b.y * s, b.w * s, b.h * s); c.strokeStyle = 'rgba(0,0,0,.35)'; c.lineWidth = 1; c.strokeRect(b.x * s + 0.5, b.y * s + 0.5, b.w * s - 1, b.h * s - 1); }
     for (const b of BUILDINGS) if (b.door) { c.fillStyle = '#3a2a1c'; c.fillRect(b.door[0] * s + s * 0.2, b.door[1] * s, s * 0.6, s); }
     for (const b of BUILDINGS) { const nm = s < 11 && b.name.length > 5 ? b.name.replace('ドローン', '') : b.name; label(nm, (b.x + b.w / 2) * s, (b.y + b.h / 2) * s, Math.min(fs, Math.floor((b.w + 0.6) * s / nm.length))); }
+    for (const k of Object.keys(SIGNS)) { // 看板：まだ読んでいないものは黄色、読んだものは灰色
+      const [gx, gy] = k.split(',').map(Number), read = S.signs.includes(k), cx = gx * s + s / 2, w = Math.max(8, s * 1.3), h = Math.max(6, s * 0.9);
+      c.fillStyle = '#5a3a1c'; c.fillRect(cx - 1, gy * s + s * 0.2, 2, s * 0.8);
+      c.fillStyle = read ? '#9a9a9a' : '#ffe27a'; c.strokeStyle = read ? '#555' : '#7a5a00'; c.lineWidth = 1.5;
+      c.fillRect(cx - w / 2, gy * s - h * 0.6, w, h); c.strokeRect(cx - w / 2, gy * s - h * 0.6, w, h);
+      c.fillStyle = read ? '#555' : '#7a5a00'; c.fillRect(cx - w * 0.3, gy * s - h * 0.25, w * 0.6, 1.5); c.fillRect(cx - w * 0.3, gy * s + h * 0.05, w * 0.45, 1.5); // 文字の線
+    }
     for (const [t2, x, y] of [['川', 13.5, 18], ['海', 24, 34.2], ['草原', 6, 3.5], ['公園', 5, 21], ['校庭', 41, 16.5]]) label(t2, x * s, y * s, fs);
     if (S.treasureMap) for (const [k, h] of Object.entries(HIDDEN)) { if (S.found.includes(k) || (h.quest && S.sideDone.includes(h.quest))) continue; const [hx, hy] = k.split(',').map(Number); c.fillStyle = '#ffd54a'; c.strokeStyle = '#7a5a00'; c.lineWidth = 1; star(hx * s + s / 2, hy * s + s / 2, s * 0.5); }
     for (const n of jobs) { c.fillStyle = '#ffd54a'; c.font = `bold ${fs + 2}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineWidth = 3; c.strokeStyle = '#1b1408'; c.strokeText('！', n.x * s + s / 2, n.y * s - s * 0.2); c.fillText('！', n.x * s + s / 2, n.y * s - s * 0.2); }
@@ -2371,7 +2361,7 @@ function viewParts() {
   for (const d of DRONES) {
     const owned = S.items.includes(d.name), short = d.price - S.money;
     drones.append(el('div', { class: 'partrow hi' },
-      el('div', {}, el('b', {}, `${d.name}　${yen(d.price)}`), el('p', { class: 'small' }, d.desc), el('p', { class: 'small only' }, '★ ' + d.only)),
+      el('div', {}, el('b', {}, `${d.name}　${yen(d.price)}`), el('p', { class: 'small' }, d.desc), el('p', { class: 'small only' }, '★ ' + d.only), affCard('highspec', true)),
       el('button', { type: 'button', ...(owned ? { disabled: '' } : {}), onclick: () => {
         if (S.money < d.price) { status.textContent = `あと${yen(d.price - S.money)}足りない。町の依頼ボードで仕事を探してみよう。`; return; }
         S.money -= d.price; addItem(d.name); save(); render();
