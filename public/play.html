@@ -219,7 +219,7 @@ ul.rec li.done { color: inherit; }
 <script>
 const CHECKED = '2026年10月17日';
 // ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
-const VERSION = 'v1.5.1', VERSION_DATE = '2026年10月20日';
+const VERSION = 'v1.5.2', VERSION_DATE = '2026年10月20日';
 
 /* ---------- BGM ----------
    場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
@@ -702,9 +702,14 @@ CH[8] = { place: '郊外の草原', title: '第8章　空撮デビュー', steps
   ]}},
   { say: ['じゅん先輩', '天気と機体のほかに、「緊急用務空域」が指定されていないかも確かめよう。災害や事故のときに、消防や警察のヘリが活動する空域で、指定されると100g以上の機体は飛ばせないんだ。DIPS 2.0や国土交通省のホームページで見られるよ。'] },
   { say: ['', 'スマホで確かめると、緊急用務空域の指定はなかった。'] },
-  { has: { item: '風速計', yes: ['', '風速計を見ると、風速6m/s。ときどき8m/sの強い風が吹いている。'],
+  { has: { item: '風速計', yes: ['', '木の枝が大きくゆれている。強い風が吹いているようだ。……そうだ、風速計を持っている。'],
     no: ['', '木の枝が大きくゆれている。強い風が吹いているようだ。……風速計があれば、数字で確かめられるのに。'] } },
   { choice: { q: 'どうする？', opts: [
+    // ifHas / ifNot：その持ち物があるとき・ないときだけ出る。flag：選ぶと章の中で印がつき、hideIf の印があると出ない
+    { text: '風速計で風の強さを確かめる', ifHas: '風速計', flag: 'wind', hideIf: 'wind', ok: true, retry: true, againLabel: 'どうするか決める', head: '📏 風を測った',
+      fb: '風速計を見ると、風速6m/s。ときどき8m/sの強い風が吹いている。じゅん先輩「標準マニュアル02では、風速5m/s以上では原則として飛ばさないんだったね。」' },
+    { text: '町のパーツ屋で風速計を買ってきて、確かめる（4,000円）', ifNot: '風速計', flag: 'wind', hideIf: 'wind', money: -4000, item: '風速計', ok: true, retry: true, againLabel: 'どうするか決める', head: '📏 風を測った',
+      fb: 'パーツ屋で風速計を買ってきた。測ってみると、風速6m/s。ときどき8m/sの強い風が吹いている。じゅん先輩「数字で分かると判断しやすいね。標準マニュアル02では、風速5m/s以上では原則として飛ばさないよ。」' },
     { text: '機体は耐えられるはず。すぐ飛ばす', ok: false, trust: -10, retry: true, fb: 'じゅん先輩「機体のカタログの数字ぎりぎりは危ないよ。風が落ち着くまで待とう。」' },
     { text: '風が落ち着くまで待つ', ok: true, trust: 10, badge: 'wait', fb: 'じゅん先輩「いい判断！　飛ばさない判断も、パイロットの大事な仕事だよ。」' },
   ]}},
@@ -2430,7 +2435,7 @@ function viewEnding() {
 
 /* ---------- 章の進行 ---------- */
 function startChapter(n, sub) {
-  S.sub = sub || null; S.ch = n; S.step = 0; S.inCh = n; S.segsDone = []; S.rpos = { x: 5, y: 7, dir: 'up' };
+  S.sub = sub || null; S.ch = n; S.step = 0; S.inCh = n; S.segsDone = []; S.cflags = {}; S.rpos = { x: 5, y: 7, dir: 'up' };
   S.screen = CH[n].steps[0].seg ? 'room' : 'play';
   S.checkpoint = { trust: S.trust, money: S.money, notes: [...S.notes], items: [...S.items] }; S.miss = 0; S.wrongAt = null;
   save(); render();
@@ -2517,8 +2522,8 @@ function msgBox(who, text, onNext) {
   a.addEventListener('click', onNext);
   return el('div', { class: 'msgwrap' }, box, el('div', { class: 'msgpad' }, a));
 }
-function feedback(ok, text, onNext, label = 'つぎへ') {
-  return [el('div', { class: 'fb ' + (ok ? 'ok' : 'ng') }, el('b', {}, ok ? (inBattle() ? '◎ こうげき成功！　モンスターにダメージ！' : '◎ せいかい') : (inBattle() ? '× モンスターの反撃！' : '× ざんねん')), el('p', {}, text)),
+function feedback(ok, text, onNext, label = 'つぎへ', head) {
+  return [el('div', { class: 'fb ' + (ok ? 'ok' : 'ng') }, el('b', {}, head || (ok ? (inBattle() ? '◎ こうげき成功！　モンスターにダメージ！' : '◎ せいかい') : (inBattle() ? '× モンスターの反撃！' : '× ざんねん'))), el('p', {}, text)),
     el('button', { type: 'button', class: 'primary', onclick: onNext }, label)];
 }
 
@@ -2561,19 +2566,22 @@ function viewPlay() {
 function playChoice(c) {
   scene.append(el('p', {}, c.q));
   const box = el('div', { class: 'choices' });
+  const cf = S.cflags || (S.cflags = {});
   for (const o of c.opts) {
-    const owned = o.item && S.items.includes(o.item);
+    if ((o.ifHas && !S.items.includes(o.ifHas)) || (o.ifNot && S.items.includes(o.ifNot)) || (o.hideIf && cf[o.hideIf])) continue;
+    const owned = o.item && S.items.includes(o.item) && !o.ifNot;
     const b = el('button', { type: 'button', onclick: () => {
       if (o.money && S.money + o.money < 0) { box.after(el('p', { class: 'small' }, 'おこづかいが足りない。')); return; }
       if (o.money) S.money += o.money;
       if (o.item) addItem(o.item);
+      if (o.flag) cf[o.flag] = true;
       const dead = o.trust ? changeTrust(o.trust) : false;
       save();
       scene.innerHTML = ''; scene.append(...header(), el('p', {}, c.q));
       if (dead) return gameOver();
       if (o.ok) awardFirstTry(o.badge);
       const again = o.retry && !o.done;
-      scene.append(...feedback(o.ok, o.fb, () => again ? render() : advance(), again ? (o.ok ? 'ほかも見る' : 'えらびなおす') : 'つぎへ'));
+      scene.append(...feedback(o.ok, o.fb, () => again ? render() : advance(), again ? (o.againLabel || (o.ok ? 'ほかも見る' : 'えらびなおす')) : 'つぎへ', o.head));
     }}, o.text);
     if (owned && o.done) { b.textContent = o.text.split('（')[0] + '（購入済み）でつづける'; b.onclick = null; b.addEventListener('click', (e) => { e.stopImmediatePropagation(); advance(); }, true); }
     else if (owned) { b.disabled = true; b.textContent = o.text + '（購入済み）'; }
