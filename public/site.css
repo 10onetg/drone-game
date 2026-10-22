@@ -43,3 +43,4 @@ th { background: var(--sky-2); font-weight: 500; white-space: nowrap; }
 .foot nav { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 8px; }
 .foot a { color: var(--ink-dim); }
 @media (max-width: 480px) { h1 { font-size: 25px; } h2 { font-size: 19px; } th { white-space: normal; } }
+.hero h1 .subtitle { display: block; font-size: 18px; color: var(--ink-dim); margin-top: 4px; }

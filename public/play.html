@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>はじめてのフライト｜ドローンのルールを学べるRPG</title>
+<title>はじめてのフライト 〜ドローンRPG〜｜ドローンのルールを学べるゲーム</title>
 <meta name="description" content="ドローンを買う前の悩みから初フライトまでを、RPGで体験しながら学べる無料のブラウザゲーム。登録・飛ばせる場所・飛ばし方のルール・飛行前点検を、遊びながら身につけます。">
 <link rel="canonical" href="https://game.jtag-works.jp/play.html">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="はじめてのフライト">
+<meta property="og:site_name" content="はじめてのフライト 〜ドローンRPG〜">
 <meta property="og:locale" content="ja_JP">
 <meta property="og:url" content="https://game.jtag-works.jp/play.html">
-<meta property="og:title" content="はじめてのフライト｜ドローンのルールを学べるRPG">
+<meta property="og:title" content="はじめてのフライト 〜ドローンRPG〜｜ドローンのルールを学べるゲーム">
 <meta property="og:description" content="ドローンを買う前の悩みから初フライトまでを、RPGで体験しながら学べる無料のブラウザゲーム。">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <!-- AdSense: 審査用・広告用のコードを受け取ったら、ここに貼る（docs/publish-steps.md の 5） -->
@@ -213,6 +213,7 @@ ul.rec li.done { color: inherit; }
 .consult { border: 2px solid var(--sun); border-radius: 8px; padding: 10px 12px; margin: 14px 0; }
 .consult p { margin: 4px 0 8px; }
 .consult-link { color: var(--sun); font-weight: bold; }
+.subtitle { margin: -6px 0 12px; font-weight: bold; color: var(--sun); letter-spacing: 2px; }
 </style>
 
 <div class="app" id="app">
@@ -229,7 +230,7 @@ ul.rec li.done { color: inherit; }
 <script>
 const CHECKED = '2026年10月17日';
 // ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
-const VERSION = 'v1.8.0', VERSION_DATE = '2026年10月21日';
+const VERSION = 'v1.8.1', VERSION_DATE = '2026年10月22日';
 
 /* ---------- BGM ----------
    場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
@@ -1237,8 +1238,7 @@ function viewTitle() {
   const hasSave = S.cleared >= 0 || S.inCh != null || !!S._resume;
   scene.append(
     el('div', { class: 'title-art', 'aria-hidden': 'true' }, el('div', { class: 'drone' }, '-[■]-'), el('div', { class: 'town' })),
-    el('p', { class: 'place' }, 'DRONE RPG'),
-    el('h1', {}, 'はじめてのフライト'),
+    el('h1', {}, 'はじめてのフライト'), el('p', { class: 'subtitle' }, '〜ドローンRPG〜'),
     el('p', {}, '街でドローンを見かけたあなた。買う前の悩みから初フライトまで、ひとつずつ解決していこう。'),
     el('div', { class: 'choices' },
       hasSave ? el('button', { type: 'button', class: 'primary', onclick: () => { const r = S._resume || 'map'; S._resume = null; setScreen(r); } }, 'つづきから') : null,
@@ -2548,7 +2548,7 @@ function viewEnding() {
   if (!S.clearDate) { const d = new Date(); S.clearDate = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`; save(); }
   const row = (k, v) => el('div', { class: 'cert-row' }, el('span', {}, k), el('b', {}, v));
   const cert = el('div', { class: 'cert' },
-    el('p', { class: 'cert-top' }, '★ はじめてのフライト ★'),
+    el('p', { class: 'cert-top' }, '★ はじめてのフライト 〜ドローンRPG〜 ★'),
     el('h2', {}, '初級編　修了証'),
     el('p', {}, 'あなたは、ドローンを買う前の悩みから、包括申請での撮影の依頼まで、ルールを守って安全に飛ばす手順を学びきりました。'),
     row('ランク', `Lv.${S.rank}`), row('信頼度', `${S.trust}`),
