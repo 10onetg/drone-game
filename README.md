@@ -1,4 +1,4 @@
-# はじめてのフライト（ドローンのルールを学べるRPG）
+# ドローンRPG〜初級編〜（ドローンのルールを学べるRPG・シリーズ第1作）
 
 公開先：https://game.jtag-works.jp/ （Cloudflare Pages）
 運営：JTAG（https://jtag-works.jp/ ）
