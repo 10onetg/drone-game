@@ -236,7 +236,7 @@ ul.rec li.done { color: inherit; }
 <script>
 const CHECKED = '2026年10月17日';
 // ゲームのバージョン。直したら数字を上げる（大きな追加は2つ目、小さな修正は3つ目）
-const VERSION = 'v1.9.0', VERSION_DATE = '2026年11月13日';
+const VERSION = 'v1.9.1', VERSION_DATE = '2026年11月13日';
 
 /* ---------- BGM ----------
    場面ごとの曲。ファイル名（またはURL）を入れると流れる。空の場面は無音。
@@ -2822,7 +2822,8 @@ function viewEnding() {
     el('p', {}, '悩みノートが埋まった。空から見た町は、思っていたよりずっと広かった。'),
     cert,
     el('p', { class: 'next-series' }, '初級編はここまで。次のシリーズもお楽しみに！'),
-    NEXT_URL ? el('a', { href: NEXT_URL, class: 'next-link' }, 'シリーズ第2作「ドローンRPG〜空撮コンテスト編〜」へ ▶') : null,
+    NEXT_URL ? el('a', { href: NEXT_URL, class: 'next-link' }, 'シリーズ第2作「ドローンRPG〜空撮コンテスト編〜」へ ▶')
+      : el('p', { class: 'next-link' }, 'シリーズ第2作「ドローンRPG〜空撮コンテスト編〜」準備中！　公開まで、もう少しお待ちください。'),
     noticeBox(),
     el('button', { type: 'button', class: 'primary', onclick: () => setScreen('map') }, '町の地図へ'),
     el('button', { type: 'button', onclick: () => { S._return = 'ending'; setScreen('chapters'); } }, '章をえらんで、もう一度確認する'),
