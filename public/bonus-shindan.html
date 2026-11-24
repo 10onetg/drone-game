@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ja">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script src="analytics.js?v=1"></script>
+<title>やらかしそうなあなたを救うロードマップ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Zen+Kaku+Gothic+New:wght@700&display=swap">
+<style>
+/* Layout: one column. Question card on top, answers below as large buttons; result = verdict + ordered to-do cards + timeline */
+:root{
+  --bg:#f5f7fb; --panel:#ffffff; --panel2:#eef2f9; --line:#d5dceb; --fg:#1d2433; --muted:#5b6578;
+  --accent:#1f5fbf; --accentfg:#ffffff; --red:#c62f2f; --green:#1f8a4c; --gold:#a86400;
+  --redbg:#fdeeee; --greenbg:#eaf6ef; --goldbg:#fff4e2;
+  --head:"Zen Kaku Gothic New","Noto Sans JP",system-ui,sans-serif;
+  --body:"Noto Sans JP","Hiragino Sans",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161f; --panel:#1a2130; --panel2:#222b3d; --line:#334059; --fg:#e8ecf4; --muted:#a3adc2;
+  --accent:#7fb0ff; --accentfg:#11161f; --red:#ff8a8a; --green:#6fd59a; --gold:#ffc56b;
+  --redbg:#3a1f24; --greenbg:#1b3328; --goldbg:#3a2e17; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161f; --panel:#1a2130; --panel2:#222b3d; --line:#334059; --fg:#e8ecf4; --muted:#a3adc2;
+  --accent:#7fb0ff; --accentfg:#11161f; --red:#ff8a8a; --green:#6fd59a; --gold:#ffc56b;
+  --redbg:#3a1f24; --greenbg:#1b3328; --goldbg:#3a2e17; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.85}
+.wrap{max-width:780px;margin:0 auto;padding-block:24px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--head);font-weight:700;text-wrap:balance;margin:0;line-height:1.45}
+h1{font-size:clamp(23px,5vw,30px)} h2{font-size:21px} h3{font-size:17px}
+p{margin:0} a{color:var(--accent)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 22px;min-width:0}
+.eyebrow{color:var(--accent);font-weight:700;font-size:14px;letter-spacing:.06em}
+.warnbox{border:2px solid var(--red)} .warnbox strong{color:var(--red)}
+.small{font-size:13px;color:var(--muted)}
+.progress{height:6px;background:var(--panel2);border-radius:99px;overflow:hidden}
+.progress span{display:block;height:100%;background:var(--accent);transition:width .25s}
+.qno{font-size:14px;color:var(--muted)}
+.qtext{font-family:var(--head);font-size:20px;margin:6px 0 4px}
+.hint{font-size:14px;color:var(--muted)}
+.opts{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;font:inherit;color:var(--fg);background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer}
+.opt:hover{border-color:var(--accent)}
+.opt:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--panel2)}
+.opt .box{flex:none;width:20px;height:20px;border:2px solid var(--muted);border-radius:50%;margin-top:4px}
+.multi .opt .box{border-radius:4px}
+.opt[aria-pressed="true"] .box{background:var(--accent);border-color:var(--accent)}
+.opt b{display:block}
+.opt small{display:block;color:var(--muted);font-size:13px;line-height:1.6}
+.nav{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.btn{font:inherit;font-weight:700;border-radius:8px;padding:10px 18px;cursor:pointer;border:1.5px solid var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accentfg)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.verdict{border-radius:10px;padding:16px 18px;border:2px solid}
+.v-ok{border-color:var(--green);background:var(--greenbg)}
+.v-need{border-color:var(--gold);background:var(--goldbg)}
+.v-ng{border-color:var(--red);background:var(--redbg)}
+.verdict h2{font-size:20px}
+.reasons{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:13px;font-weight:700;border:1.5px solid currentColor;border-radius:99px;padding:0 9px;line-height:1.8}
+.c-red{color:var(--red)} .c-gold{color:var(--gold)} .c-green{color:var(--green)} .c-blue{color:var(--accent)}
+.alert{border-left:5px solid var(--red);background:var(--redbg);border-radius:6px;padding:10px 14px}
+.alert.gold{border-color:var(--gold);background:var(--goldbg)}
+.alert b{color:var(--red)} .alert.gold b{color:var(--gold)}
+.todo{display:flex;flex-direction:column;gap:12px}
+.task{border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--panel)}
+.task-head{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.num{flex:none;background:var(--accent);color:var(--accentfg);font-weight:700;border-radius:6px;padding:0 9px;font-variant-numeric:tabular-nums}
+.when{font-size:13px;font-weight:700;color:var(--gold);margin-left:auto}
+.row{display:grid;grid-template-columns:6.5em 1fr;gap:10px;border-top:1px solid var(--line);padding-top:8px;margin-top:8px}
+.row>div{min-width:0}
+.lab{font-weight:700;font-size:14px}
+.l-do{color:var(--accent)} .l-why{color:var(--green)} .l-day{color:var(--gold)} .l-ng{color:var(--red)}
+ul,ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:3px}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2)}
+td.t{white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:700}
+.answers{font-size:14px;color:var(--muted)}
+.answers li{list-style:none}
+.answers ul{padding:0}
+.datebox{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:10px 0 14px;padding:10px 12px;background:var(--panel2);border-radius:8px;font-size:14px}
+.datebox input{font:inherit;padding:6px 10px;border:1.5px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg)}
+.tl{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:0;border-left:3px solid var(--line);margin-left:6px}
+.tl li{position:relative;display:grid;grid-template-columns:11em 1fr;gap:12px;padding:8px 0 8px 18px}
+.tl li::before{content:"";position:absolute;left:-9px;top:15px;width:13px;height:13px;border-radius:50%;background:var(--panel);border:3px solid var(--accent)}
+.tl li.imp::before{border-color:var(--red);background:var(--red)}
+.tl-when{font-weight:700;font-variant-numeric:tabular-nums}
+.tl-when small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.tl li.imp .tl-when{color:var(--red)}
+.tl li.late .tl-when small{color:var(--red);font-weight:700}
+@media (max-width:560px){.tl li{grid-template-columns:1fr;gap:0}}
+.typecard{text-align:center;padding:18px 14px;border-radius:12px;background:var(--panel2);display:flex;flex-direction:column;gap:6px;align-items:center}
+.type-pre{font-size:14px;color:var(--muted)}
+.type-name{font-family:var(--head);font-weight:700;font-size:clamp(22px,6vw,30px);color:var(--accent);line-height:1.4;text-wrap:balance}
+.type-catch{font-size:15px}
+.senpai{margin-top:8px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;max-width:560px;position:relative}
+.senpai-name{font-size:12px;font-weight:700;color:var(--green)}
+.ttl{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;margin:6px 0 4px}
+.ttl-pre{font-size:clamp(16px,4.4vw,20px);color:var(--fg);font-weight:700;letter-spacing:.04em}
+.ttl-pre b{color:var(--red)}
+.ttl-main{font-size:clamp(22px,6.4vw,40px);line-height:1.25;color:var(--fg);white-space:nowrap}
+.ttl-sub{font-size:clamp(16px,4.5vw,20px);color:var(--accent)}
+header.card{text-align:center}
+.aff-head{display:flex;align-items:center;gap:10px}
+.adtag{font-size:12px;font-weight:700;color:var(--muted);border:1px solid var(--muted);border-radius:4px;padding:0 6px}
+.aff{list-style:none;padding:0;margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.aff li{display:flex;gap:12px;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.aff li>div{min-width:0;display:flex;flex-direction:column}
+.aff li span{font-size:13px;color:var(--muted)}
+.aff a{flex:none;font-size:14px;font-weight:700;text-decoration:none;border:1.5px solid var(--accent);border-radius:6px;padding:4px 10px;white-space:nowrap}
+.aff a:hover,.aff a:focus-visible{background:var(--accent);color:var(--accentfg)}
+.disclaimer{font-size:13px;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:6px 10px}
+.alert a{color:var(--accent)}
+footer{font-size:13px;color:var(--muted);text-align:center}
+@media (max-width:560px){.row{grid-template-columns:1fr;gap:2px}.card{padding:16px}.when{margin-left:0;width:100%}}
+@media (prefers-reduced-motion: reduce){.progress span{transition:none}}
+</style>
+
+<div class="wrap">
+  <header class="card">
+    <span class="eyebrow">ドローンRPG〜初級編〜 クリア特典</span>
+    <h1 class="ttl"><span class="ttl-pre"><b>やらかしそう</b>なあなたを救う</span><span class="ttl-main">ドローン・ロードマップ</span><span class="ttl-sub">〜あなたは何タイプ？〜</span></h1>
+    <p>質問に答えるだけで、あなたのタイプと、飛ばす日までの「やること」「いつまでに」「まちがいやすい注意」が順番にわかります。</p>
+  </header>
+
+  <section class="card warnbox">
+    <p><strong>ご注意</strong>　2026年11月時点の航空法・小型無人機等飛行禁止法・国土交通省の要領などをもとにした目安です。法令や手数料は変わることがあります。実際に飛ばす前に、最新の法令・国土交通省の案内・飛ばす場所の条例やルールを必ず確認してください。</p>
+  </section>
+
+  <main id="app" aria-live="polite"></main>
+
+  <footer>Amazonのアソシエイトとして、ドローンRPG〜初級編〜（JTAG）は適格販売により収入を得ています。<br>出典：国土交通省 航空局（無人航空機の飛行ルール、飛行許可・承認の申請、手続きの流れ、航空局標準マニュアル①②（令和7年12月26日版）、審査要領（令和8年9月29日改正）、飛行計画の通報要領、飛行日誌の取扱要領、事故等の報告要領、無人航空機登録ポータル）、警察庁（小型無人機等飛行禁止法）</footer>
+</div>
+
+<script>
+(function(){
+const app=document.getElementById('app');
+
+/* ---------- 質問 ---------- */
+function isHolder(a){return a.indoor==='out'&&a.weight!=='under'&&a.permit==='have'}
+function likelyTokutei(a){
+  if(a.indoor!=='out'||a.weight==='under')return false;
+  const h=(k,v)=>(a[k]||[]).includes(v);
+  if(h('place','did')||h('place','dontknow')||h('place','airport'))return true;
+  if(a.level==='pro')return (a.tokutei||[]).some(x=>x!=='none');
+  return a.high==='yes'||a.time==='night'||a.dist!=='far'||a.sight==='no'||(a.special||[]).some(x=>x!=='none');
+}
+const Q=[
+ {id:'who',text:'今のあなたに一番近いのは？',type:'one',opts:[
+   ['buy','これからドローンを買う','まだ機体を持っていない・どれを買うか迷っている'],
+   ['practice','許可を取らずに練習したい','まずは操縦に慣れたい'],
+   ['hobby','趣味で空撮したい','景色・旅行・家族の思い出など'],
+   ['work','仕事で飛ばしたい','撮影の依頼・点検・測量など'],
+   ['comeback','資格（民間）を取ったが、しばらく飛ばしていない','久しぶりに飛ばす前に確認したい'],
+   ['national','国家資格（一等・二等）を持っている','申請を省ける場合を知りたい']]},
+ {id:'level',text:'「特定飛行」という言葉を知っていますか？',hint:'国の許可・承認が必要になる場所や飛ばし方のことです。',type:'one',when:a=>a.who!=='buy',opts:[
+   ['beginner','知らない・自信がない','ひとつずつ、かみくだいた質問で案内します'],
+   ['pro','知っている（DID・夜間・目視外・30m未満など）','当てはまる項目をまとめて選ぶ、短い質問で案内します']]},
+ {id:'weight',text:'飛ばす機体の重さは？',hint:'機体本体＋バッテリーの合計。プロペラガードなど取り外せる部品は含めません。',type:'one',opts:[
+   ['under','100g未満',''],['over','100g以上',''],['unknown','まだ決めていない・わからない','']]},
+ {id:'indoor',text:'どこで飛ばしますか？',hint:'「屋内」は、四方と上が壁・屋根で囲まれ、機体が外に出られない場所です。ドアや窓が大きく開いた倉庫、ネットで囲っただけの屋外の練習場は「屋外」として答えてください。',type:'one',opts:[
+   ['in','屋内','体育館・屋内練習場・部屋など、四方と上が囲まれた場所'],
+   ['out','屋外','']]},
+ {id:'permit',text:'国の許可・承認（包括申請など）を、すでに持っていますか？',hint:'DIPS 2.0で申請して、許可書（許可・承認書）をもらっている場合です。民間資格の修了証は許可ではありません。',type:'one',when:a=>a.indoor==='out'&&a.weight!=='under'&&a.who!=='buy',opts:[
+   ['none','持っていない',''],
+   ['have','持っている','包括（期間を決めて何度も飛ばせる）・個別のどちらでも'],
+   ['unknown','よくわからない','前に申請したような気がする、会社が取った、など']]},
+ {id:'pkind',text:'持っている許可は、どちらですか？',hint:'許可書の「飛行の期間」「飛行の経路」の欄を見るとわかります。',type:'one',when:a=>isHolder(a),opts:[
+   ['blanket','包括（期間を決めて、場所を決めずに何度も飛ばせる）',''],
+   ['route','場所（経路）や日時を決めた許可','包括でも経路を決めたもの、1回だけの個別の許可など'],
+   ['unknown','わからない','']]},
+ {id:'pitems',text:'許可書に書いてある飛ばし方を、すべて選んでください',hint:'許可書の「飛行の場所・方法」の欄に書いてあります。書いていない飛ばし方は、許可があってもできません。',type:'multi',when:a=>isHolder(a),opts:[
+   ['did','人口集中地区（DID）の上空',''],['night','夜間',''],['bvlos','目視外',''],['near','人・物件から30m未満',''],
+   ['event','催し場所の上空',''],['drop','物件投下',''],['danger','危険物の輸送',''],['airport','空港などの周辺',''],['alt','150m以上',''],
+   ['dontknow','わからない・許可書を見ていない','']]},
+ {id:'pexp',text:'飛ばす日は、許可の期間に入っていますか？',hint:'包括の許可は原則3か月、長くても1年です。更新の申請も開庁日10日前までに出す必要があります。',type:'one',when:a=>isHolder(a),opts:[
+   ['ok','入っている（期限まで1か月以上ある）',''],['soon','入っているが、期限まで1か月もない',''],['expired','もう切れている・飛ばす日には切れている',''],['unknown','期限を覚えていない','']]},
+ {id:'pmanual',text:'許可を取ったときに選んだ飛行マニュアルは？',hint:'許可書や申請の控えに書いてあります。選んだマニュアルの決まりを守ることが、許可の条件です。',type:'one',when:a=>isHolder(a),opts:[
+   ['std2','航空局標準マニュアル②（場所を決めない申請）',''],['std1','航空局標準マニュアル①（場所を決めた申請）',''],['own','自分（会社・スクール）で作ったマニュアル',''],['unknown','わからない','']]},
+ {id:'pmatch',text:'今回使う機体と操縦する人は、許可書（申請）に入っていますか？',type:'one',when:a=>isHolder(a),opts:[
+   ['yes','どちらも入っている',''],['no','入っていない（新しい機体・ほかの人が操縦する など）',''],['unknown','わからない','']]},
+ {id:'pskill',text:'許可を取ったあとも、定期的に操縦練習をしていますか？',hint:'標準マニュアルでは、操縦の腕を保つために定期的に練習することになっています。',type:'one',when:a=>isHolder(a),opts:[
+   ['yes','している',''],['no','しばらく飛ばしていない・練習していない','']]},
+ {id:'place',text:'飛ばす場所に当てはまるものをすべて選んでください',hint:'わからないものは「わからない」を選ぶと、調べ方を案内します。',type:'multi',when:a=>a.indoor==='out',opts:[
+   ['did','人口集中地区（DID）','住宅地・市街地に多い。地図で確認できます'],
+   ['airport','空港やヘリポートの近く',''],
+   ['juyo','国の重要施設・自衛隊/米軍の施設・原発・大使館などの近く','おおむね1,000m以内'],
+   ['park','公園',''],
+   ['river','河川敷・川の上',''],
+   ['sea','海岸・海の上・港',''],
+   ['nature','国立公園・観光地・山',''],
+   ['road','道路の上で離着陸する／道路の上を飛ぶ',''],
+   ['other','他人の土地・施設（公民館・学校・お店など）',''],
+   ['dontknow','わからない',''],
+   ['none','どれにも当てはまらない','DIDではない、自分や家族の土地など']]},
+ {id:'tokutei',text:'当てはまる飛ばし方をすべて選んでください',hint:'場所（DID・空港周辺）は前の質問で答えた内容を使います。',type:'multi',when:a=>a.indoor==='out'&&a.level==='pro',opts:[
+   ['alt','150m以上',''],['night','夜間',''],['bvlos','目視外',''],['near','人・物件から30m未満',''],['event','催し場所の上空',''],['drop','物件投下',''],['danger','危険物の輸送',''],['none','どれも当てはまらない','']]},
+ {id:'high',text:'地面や水面から150m以上の高さまで上がりますか？',type:'one',when:a=>a.indoor==='out'&&a.level!=='pro',opts:[
+   ['no','上がらない',''],['yes','上がる（山の上・崖の上から飛ばす場合も注意）','']]},
+ {id:'time',text:'飛ばす時間帯は？',hint:'日の入りの後は、まだ明るくても夜間です。その日の日の出・日の入りの時刻は国立天文台の「こよみの計算」で調べられます。',type:'one',when:a=>a.indoor==='out'&&a.level!=='pro',opts:[
+   ['day','昼間（日の出から日の入りまで）',''],['night','夜・日の出前・日の入り後','夜景・朝焼け・花火など']]},
+ {id:'dist',text:'第三者の人・建物・車から30m以上離れて飛ばせますか？',hint:'自分や一緒に作業する人、その持ち物は含みません。他人の家・停めてある車・電柱・電線・塀・看板なども「物件」です。離陸する場所のすぐ横に他人の車があるだけでも30m未満になります。',type:'one',when:a=>a.indoor==='out'&&a.level!=='pro',opts:[
+   ['far','離れられる',''],['near','近づくことがある',''],['unknown','わからない','']]},
+ {id:'sight',text:'飛んでいる間、ずっと自分の目で機体が見えますか？',type:'one',when:a=>a.indoor==='out'&&a.level!=='pro',opts:[
+   ['yes','見える',''],['no','見えなくなることがある','モニターやゴーグルだけを見る、建物の裏に回る、遠くへ行く']]},
+ {id:'special',text:'次のことをしますか？（すべて選択）',hint:'「催し場所」は、お祭り・花火大会・スポーツ大会・コンサートなど、決まった日時に人が集まる場所です。判断に迷うときは、催しとして考えるか、その上を飛ばさない計画にしましょう。',type:'multi',when:a=>a.indoor==='out'&&a.level!=='pro',opts:[
+   ['event','お祭り・イベントなど人が集まる場所の上を飛ぶ',''],
+   ['drop','物を落とす（水や農薬をまく）',''],
+   ['danger','危険物を運ぶ',''],
+   ['none','どれもしない','']]},
+ {id:'helper',text:'当日、手伝ってくれる人（補助者）はいますか？',hint:'補助者は、まわりを見張って操縦者に声をかけたり、第三者が飛行経路の下に入らないようにしたりする人です。',type:'one',when:a=>likelyTokutei(a),opts:[
+   ['yes','いる',''],['no','いない・ひとりで飛ばす',''],['unknown','まだ決めていない','']]},
+ {id:'freq',text:'飛ばす回数は？',type:'one',when:a=>a.indoor==='out'&&a.permit!=='have',opts:[
+   ['once','1回だけ・たまに',''],['often','何度も・定期的に','']]},
+ {id:'train',text:'監督者のもとで10時間以上の操縦練習をした記録がありますか？',hint:'許可・承認を申請するときに、操縦の経験として求められます。',type:'one',when:a=>a.indoor==='out'&&a.weight!=='under'&&a.permit!=='have',opts:[
+   ['yes','ある',''],['no','ない・足りない','']]},
+ {id:'reg',text:'機体登録の状況は？',type:'one',when:a=>a.weight==='over'&&a.indoor==='out',opts:[
+   ['none','まだ登録していない',''],['ok','登録済み（3年以内）',''],['old','登録したが、3年近くたっている・期限がわからない','']]},
+ {id:'lead',text:'飛ばしたい日まで、あとどのくらい？',type:'one',when:a=>a.indoor==='out',opts:[
+   ['free','まだ決めていない',''],['month','1か月以上ある',''],['2w','2〜4週間',''],['soon','2週間以内','']]}
+];
+
+/* ---------- 状態 ---------- */
+let A={}, idx=0, history=[];
+function visible(q){return !q.when||q.when(A)}
+function nextIndex(from){for(let i=from+1;i<Q.length;i++){if(visible(Q[i]))return i}return -1}
+function countVisible(){return Q.filter(visible).length}
+function posOf(i){return Q.slice(0,i+1).filter(visible).length}
+
+function renderQ(){
+  const q=Q[idx], cur=A[q.id];
+  const total=countVisible(), pos=posOf(idx);
+  const multi=q.type==='multi';
+  const sel=multi?(cur||[]):cur;
+  app.innerHTML=`<section class="card">
+    <div class="progress" aria-hidden="true"><span style="width:${Math.round((pos-1)/total*100)}%"></span></div>
+    <p class="qno" style="margin-top:12px">質問 ${pos} / 約${total}</p>
+    <h2 class="qtext" id="qt">${q.text}</h2>
+    ${q.hint?`<p class="hint">${q.hint}</p>`:''}
+    <div class="opts ${multi?'multi':''}" role="group" aria-labelledby="qt">
+      ${q.opts.map(([v,l,s])=>{const on=multi?sel.includes(v):sel===v;
+        return `<button type="button" class="opt" data-v="${v}" aria-pressed="${on}"><span class="box"></span><span><b>${l}</b>${s?`<small>${s}</small>`:''}</span></button>`}).join('')}
+    </div>
+    <div class="nav">
+      <button type="button" class="btn ghost" id="back" ${history.length?'':'disabled'}>もどる</button>
+      ${multi?`<button type="button" class="btn primary" id="next" ${sel.length?'':'disabled'}>次へ</button>`:''}
+    </div></section>`;
+  app.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{
+    const v=b.dataset.v;
+    if(multi){let s=(A[q.id]||[]).slice();
+      if(v==='none'||v==='dontknow'&&q.id!=='place'){s=s.includes(v)?[]:[v]}
+      else{s=s.filter(x=>x!=='none'); s=s.includes(v)?s.filter(x=>x!==v):s.concat(v)}
+      A[q.id]=s; renderQ();
+    }else{A[q.id]=v; go()}
+  }));
+  const nb=document.getElementById('next'); if(nb)nb.addEventListener('click',go);
+  document.getElementById('back').addEventListener('click',()=>{idx=history.pop();renderQ()});
+}
+function go(){
+  // 機体をまだ決めていない人・屋内の人は早めに結果へ
+  history.push(idx);
+  const n=nextIndex(idx);
+  if(n<0){renderResult();return}
+  idx=n; renderQ();
+}
+
+/* ---------- 判定 ---------- */
+function judge(){
+  const has=(k,v)=>(A[k]||[]).includes(v);
+  const out=A.indoor==='out';
+  const over=A.weight!=='under';  // わからない・未定は100g以上として案内
+  const r={need:[],ng:[],coord:[],notes:[],keys:[]};
+  if(!out) return {kind:'indoor',r};
+  if(has('place','juyo')) r.ng.push('重要施設の周辺');
+  if(over){
+    const add=(k,l)=>{r.need.push(l);r.keys.push(k)};
+    if(has('place','airport')){add('airport','空港などの周辺');r.coord.push('airport')}
+    if(A.high==='yes'){add('alt','150m以上');r.coord.push('alt')}
+    if(has('place','did')) add('did','人口集中地区（DID）');
+    if(A.time==='night') add('night','夜間');
+    if(A.sight==='no') add('bvlos','目視外');
+    if(A.dist==='near') add('near','30m未満');
+    if(A.dist==='unknown') add('near?','30m未満かも（要確認）');
+    if(has('place','dontknow')) add('did?','DID・空港周辺かも（要確認）');
+    if(has('special','event')) add('event','催し場所の上空');
+    if(has('special','drop')) add('drop','物件の投下');
+    if(has('special','danger')) add('danger','危険物の輸送');
+  }else{
+    if(has('place','airport')) r.notes.push('100g未満でも、空港の周辺では航空法の制限があります。空港事務所に確認してください。');
+    if(A.high==='yes') r.notes.push('100g未満でも、150m以上の高さは航空法の制限があります。');
+  }
+  const kind=!over?'model':(r.need.length?'cat2':'cat1');
+  return {kind,r,h:holderCheck(kind,r)};
+}
+/* 持っている許可と、今回の飛び方を照合 */
+const KL={did:'DID',night:'夜間',bvlos:'目視外',near:'30m未満',event:'催し場所の上空',drop:'物件投下',danger:'危険物の輸送',airport:'空港などの周辺',alt:'150m以上'};
+function holderCheck(kind,r){
+  if(A.permit!=='have'||A.indoor!=='out'||A.weight==='under') return null;
+  const it=A.pitems||[]; const itemsUnknown=it.includes('dontknow');
+  const keys=r.keys.map(k=>k.replace('?',''));
+  const uniq=[...new Set(keys)];
+  // did? は DID と空港周辺の両方の可能性
+  const want=uniq.flatMap(k=>k==='did'&&r.keys.includes('did?')&&!r.keys.includes('did')?['did','airport']:[k]);
+  const missing=itemsUnknown?[]:[...new Set(want)].filter(k=>!it.includes(k)).map(k=>KL[k]);
+  const k=x=>r.keys.includes(x);
+  const route=[];
+  if(A.pkind!=='route'){
+    if(k('airport'))route.push('空港などの周辺'); if(k('alt'))route.push('150m以上');
+    if(k('did')&&k('night'))route.push('DIDでの夜間'); if(k('night')&&k('bvlos'))route.push('夜間の目視外');
+    if(k('event'))route.push('催し場所の上空（日時と経路まで決めた申請）');
+    if(A.who==='hobby')route.push('趣味目的の飛行');
+  }
+  const mr=[];
+  if(A.pmanual==='std2'){
+    if(k('did')&&k('night'))mr.push('②ではDID上空の夜間飛行はできない');
+    if(k('night')&&k('bvlos'))mr.push('②では夜間の目視外飛行はできない');
+    if(k('did')&&k('bvlos')&&!(A.who==='work'&&A.helper==='yes'))mr.push('②ではDID上空の目視外飛行はできない（業務上やむを得ない場合で、補助者を必ず置くときだけ可）');
+    if(k('event'))mr.push('標準マニュアルでは催し場所の上空は飛ばせない');
+  }
+  const manualNG=mr.length?mr:null;
+  const didBvlosOK=A.pmanual==='std2'&&k('did')&&k('bvlos')&&A.who==='work'&&A.helper==='yes';
+  const expired=A.pexp==='expired', soon=A.pexp==='soon', expUnknown=A.pexp==='unknown';
+  const mismatch=A.pmatch==='no', matchUnknown=A.pmatch==='unknown';
+  const unknownAny=itemsUnknown||A.pkind==='unknown'||A.pmanual==='unknown'||expUnknown||matchUnknown;
+  const covered=kind!=='cat2'?true:(!missing.length&&!route.length&&!manualNG&&!expired&&!mismatch&&!unknownAny&&!r.keys.some(x=>x.endsWith('?')));
+  return {missing,route,manualNG,didBvlosOK,expired,soon,expUnknown,mismatch,matchUnknown,itemsUnknown,unknownAny,covered};
+}
+
+/* ---------- やることの部品 ---------- */
+function T(title,o){return Object.assign({title},o)}
+function buildTasks(J){
+  const has=(k,v)=>(A[k]||[]).includes(v);
+  const t=[]; const out=A.indoor==='out'; const over=A.weight!=='under'; const cat2=J.kind==='cat2';
+  const ndid=has('place','did'), night=A.time==='night', bvlos=A.sight==='no';
+
+  if(A.weight==='unknown'||A.who==='buy') t.push(T('機体を選ぶ',{when:'最初に',
+    do:['重さ（機体＋バッテリー）で100g未満か以上かを確認','技適マークがあるか確認（電波法）','ゴーグルで見るFPV機は、使う電波（5.7GHz帯など）によって無線の資格と無線局の開設が必要。一般的な空撮機は不要なことが多い','はじめは100g未満の練習機で、屋内から練習するのがおすすめ'],
+    why:'100g以上は航空法の「無人航空機」になり、登録や許可・承認の対象になるため。',
+    day:'なし',
+    ng:['100g未満でも、空港の周辺・重要施設の周辺・条例で禁止の公園などでは飛ばせない','海外通販の機体やゴーグルは技適がないことがある']}));
+
+  if(!out){t.push(T('屋内で練習する',{when:'いつでも',
+    do:['四方と上が囲まれた場所（ネットで囲まれた練習場など）で飛ばす','施設の管理者のルールを守る','離着陸・ホバリング・前後左右の移動・8の字などを練習','練習の日時・時間・内容を記録しておく（あとで屋外の許可申請に使える）'],
+    why:'屋内は航空法の対象外。登録や許可・承認がいらず、安全に操縦に慣れられるため。',
+    day:'週1回で1〜2か月が目安',
+    ng:['窓やドアが開いていて外とつながる場所は屋内とみなされないことがある','100g以上の機体でも屋内なら登録は不要だが、屋外で飛ばす日は登録が必要']}));
+    return t;}
+
+  if(A.who==='comeback') t.push(T('久しぶりに飛ばす前の確認',{when:'最初に',
+    do:['機体登録の有効期限（3年）を確認','機体のファームウェア・アプリ・リモートIDの更新','ルールの変更を確認：小型無人機等飛行禁止法の範囲が2026年7月14日から1,000mに拡大、標準マニュアルは令和7年12月26日版（①②）','民間の修了証だけでは国の許可・承認の代わりにならない'],
+    why:'しばらく飛ばしていない間に、登録の期限切れやルールの変更があるため。',
+    day:'半日〜1日',
+    ng:['期限が切れた登録は更新できず、新規登録のやり直し','屋外で飛ばす前に、まず許可のいらない場所で操縦の勘を取り戻す']}));
+
+  if(A.who==='national') t.push(T('国家資格で省ける範囲を確認',{when:'最初に',
+    do:['二等以上の資格＋機体認証（第二種以上）があり、立入管理をするなら、DID・夜間・目視外・30m未満の飛行は許可・承認の申請がいらない場合がある','空港周辺・150m以上・催し場所の上空・危険物・物件投下や、25kg以上の機体は申請が必要','資格の「限定」（夜間・目視外など）がついているか確認','飛行計画の通報・飛行日誌は省けない'],
+    why:'資格の種類と機体認証の有無で、申請がいるかどうかが変わるため。',
+    day:'確認は半日',
+    ng:['機体認証のない機体では、資格があっても申請が必要','この診断は初級者向けです。詳しくは国交省の案内で確認してください']}));
+
+  if(over){
+    if(A.reg==='none'||A.reg===undefined) t.push(T('機体を登録する（DIPS 2.0）',{when:'1〜2か月前',
+      do:['DIPS 2.0でアカウントを作り、機体の登録を申請','手数料を払う（オンライン＋マイナンバーカードで1機900円が目安。郵送は2,400円）','登録記号が届いたら機体に表示','リモートIDに登録記号を書き込む'],
+      why:'だれの機体かを国が把握するため。登録していない100g以上の機体は屋外で飛ばせない。',
+      day:'オンラインで数日〜1週間（書面は数週間）',
+      ng:['登録記号の表示・リモートIDがないのも違反','有効期間は3年。期限が切れると新規登録のやり直し','2機目以降の割引は同じ申請で一緒に登録したときだけ']}));
+    if(A.reg==='old') t.push(T('機体登録を更新する',{when:'すぐ',
+      do:['DIPS 2.0で有効期限を確認','期限の1か月前から期限までに更新（手数料は新規と同じ）','期限が切れていたら新規登録をやり直し、新しい登録記号を表示・リモートIDに書き込む'],
+      why:'期限の切れた機体は屋外で飛ばせないため。',day:'数日〜1週間',
+      ng:['期限切れのまま飛ばすと未登録機の飛行になる']}));
+  }
+
+  t.push(T('飛ばす場所を地図で確認する',{when:'1か月前',
+    do:['DIPS 2.0の地図や国土地理院の地図で、人口集中地区（DID）・空港の周辺・重要施設の周辺を確認', has('place','dontknow')?'今回「わからない」と答えた項目は、ここで必ず確認する':'選んだ場所以外にも当てはまらないか確認','地面・水面から150mを超えないか確認（離陸地点からではない）','飛ばす前日と当日に緊急用務空域が指定されていないか確認'],
+    why:'場所によって、国の許可がいるか・そもそも飛べないかが決まるため。',
+    day:'半日（できれば現地を下見）',
+    ng:['DIDかどうかは「人が多そうか」ではなく地図で判断する','自分の家の庭でもDIDなら許可が必要','緊急用務空域は許可があっても飛べない']}));
+
+  if(has('place','juyo')) t.push(T('重要施設の周辺：同意と警察への通報',{when:'48時間前まで',
+    do:['対象施設の敷地の上空（レッドゾーン）と周囲おおむね1,000m（イエローゾーン）は原則飛ばせない','飛ばせるのは施設管理者の同意がある場合や、土地の持ち主の同意を得てその上空を飛ばす場合など','飛行の48時間前までに、管轄の警察署を通して都道府県公安委員会へ通報（地図・同意書の写しを付ける。オンライン通報も可）','海が入るなら管区海上保安本部、防衛施設・対象空港なら施設管理者にも通報'],
+    why:'国の重要施設を守るための法律（小型無人機等飛行禁止法）で決まっているため。重さに関係なく、100g未満も対象。',
+    day:'同意を得るのに数週間、通報は48時間前まで',
+    ng:['レッドゾーンで飛ばすと1年以下の拘禁刑または50万円以下の罰金','航空法の許可とは別の手続き。どちらも必要なことがある']}));
+
+  if(J.r.coord.includes('airport')) t.push(T('空港の管理者・空港事務所と調整する',{when:'1か月以上前',
+    do:['空港の管理者（設置管理者）と空港事務所に、飛行の日時・場所・高さを相談','調整した結果を許可申請に書く'],
+    why:'飛行機・ヘリの離着陸の安全を守るため。調整が済まないと許可が出ない。',
+    day:'数週間かかることも',ng:['100g未満でも空港の周辺は制限がある']}));
+  if(J.r.coord.includes('alt')) t.push(T('150m以上：空港事務所と調整する',{when:'1か月以上前',
+    do:['飛ばす場所を管轄する空港事務所（管制機関）に相談','調整した結果を許可申請に書く'],
+    why:'有人機が飛ぶ高さに入るため。',day:'数週間かかることも',
+    ng:['150mは地面・水面から。山の斜面では急に150mを超えることがある']}));
+
+  if(cat2&&A.train==='no') t.push(T('10時間以上の練習と記録',{when:'1〜2か月前',
+    do:['許可のいらない場所（屋内や、DIDでない広い場所で30m以上離れられる所）で、監督者のもとで練習','離着陸（3mまで5回連続）、ホバリング（半径1m）、左右・前後20mの移動、水平飛行がむずかしくなくできるまで',A.who==='work'?'仕事なら、対面飛行・10m離れた地点での組み合わせ飛行・8の字（各5回連続）まで':'練習の日時・場所・時間・内容を記録',night?'夜間飛行の練習も必要':'' ,bvlos?'目視外飛行の練習も必要':'' ,has('special','drop')?'物件投下の練習のあと、5回以上の投下実績が必要':''].filter(Boolean),
+    why:'許可・承認の申請で、操縦の経験として求められるため（航空局標準マニュアル）。',
+    day:'週末だけなら1〜2か月、ドローンスクールなら数日',
+    ng:['練習の記録がないと申請書に書けない','練習のために許可のいる場所を使うなら、その許可が必要']}));
+
+  const H=J.h;
+  if(cat2){
+    const hp=A.helper, ev=has('special','event');
+    t.push(T('補助者を決める',{when:'2週間前まで',
+      do:['補助者の役割：飛行経路の下に第三者が入らないよう見張る・声をかける、機体や有人機・鳥・天気の変化を操縦者に知らせる','人数は「飛行経路全体を見わたせる」ことが目安。経路が長い・死角があるなら複数人','連絡手段（トランシーバーなど）と、中止の合図を決めておく',
+        hp==='yes'?'当日の立ち位置・役割・中止の合図を、事前に説明しておく':'',
+        hp!=='yes'?'補助者がいないなら：飛行経路の下と離着陸場所を、コーン・ロープ・看板などではっきり区切り、第三者が入らない状態を確実に作る（選んだマニュアルで補助者の代わりに認められている場合）':'',
+        hp!=='yes'&&bvlos?(ndid?'DID上空の目視外は、操縦者と常に連絡がとれる補助者が必須（コーンや看板の区画では代えられない）':'目視外は、双眼鏡などを持つ補助者を置くのが基本。立入管理の区画をはっきり示して、第三者の立入りを確実に制限できれば代えられる'):'',
+        hp!=='yes'&&ev?'催し場所の上空は、補助者を必ず確保する（標準マニュアルでは催し場所の上空は飛ばせないので、独自の飛行マニュアルも必要）':'',
+        H&&!H.itemsUnknown?'お持ちの許可書・マニュアルに、補助者の条件（人数・配置）が書かれていないか確認':''].filter(Boolean),
+      why:'第三者の立入りや、障害物・有人機への接近に、操縦者ひとりでは気づけないことがあるため。補助者の配置は、飛行マニュアル（許可の条件）で決められていることが多い。',
+      day:'お願いと打合せに1〜2週間',
+      ng:['補助者は経路全体を見わたせる位置で、操縦者とすぐ連絡がとれること','補助者にも飛ばし方・中止の合図を事前に説明する','家族や友人に頼むときも、役割を口頭でなく紙で渡すと当日あわてない']}));
+  }
+  if(cat2&&H){
+    const items=(A.pitems||[]).filter(x=>x!=='dontknow').map(x=>KL[x]);
+    if(H.unknownAny) t.push(T('持っている許可書の中身を確かめる',{when:'いますぐ',
+      do:['DIPS 2.0にログインし、申請の一覧から許可書（許可・承認書）を開いて保存する','確認する欄：飛行の期間／飛行の場所（経路）／飛行の方法（DID・夜間・目視外・30m未満など）／機体／操縦者／飛行マニュアル／条件','会社やスクールが取った許可なら、申請した人に許可書の写しをもらう'],
+      why:'許可書に書いていない飛ばし方は、許可があってもできないため。中身がわからないまま飛ばすのがいちばん危ない。',
+      day:'半日',ng:['「包括を取った＝何でも飛ばせる」は誤り','許可書は当日、すぐ見せられるように持っていく（原本か写し。スマホなどの電子データでも可）']}));
+    if(A.pskill==='no') t.push(T('本番の前に操縦練習をして、腕を取りもどす',{when:'2週間前まで',
+      do:['許可のいらない場所（屋内や、DIDでない広い場所で人・物件から30m以上離れられる所）で練習','離着陸・ホバリング・前後左右の移動・8の字など、基本の操作をひととおり', night?'夜間に飛ばすなら、夜間の操作も確認':'', bvlos?'目視外で飛ばすなら、モニターを見ながらの操作も確認':'','練習した日時・場所・時間・内容を記録しておく'].filter(Boolean),
+      why:'標準マニュアルでは、操縦の腕を保つために定期的に練習することになっているため。久しぶりの本番がいちばん危ない。',
+      day:'半日〜数日',ng:['練習のために許可のいる場所を使うなら、その許可（今の許可の範囲）を守る','国家資格を持っている人も、腕の維持に努めることになっている']}));
+    if(H.covered) t.push(T('許可書と今回の飛び方を照らし合わせる',{when:'2週間前まで',
+      do:['今回の飛び方：'+J.r.need.join('・')+'　→　許可書の「飛行の方法」：'+(items.join('・')||'—'),'飛ばす日が許可の期間に入っているか', A.pkind==='route'?'場所（経路）・日時を決めた許可なら、今回の場所・日時が許可書と同じか':'包括の許可でも、許可書の「条件」に書かれた範囲（高さ・場所の種類など）を超えないか','機体と操縦者が許可書に入っているか','選んだマニュアル（'+(A.pmanual==='std2'?'標準マニュアル②':A.pmanual==='std1'?'標準マニュアル①':'独自マニュアル')+'）を読み直し、今回の飛び方で守ることを確認'],
+      why:'新しい申請はいらないが、許可書の条件どおりに飛ばすことが許可の条件だから。',
+      day:'半日',ng:['許可書の条件やマニュアルを守らないと、許可があっても違反','期限が近いなら、更新の申請も開庁日10日前まで']}));
+  }
+  if(cat2&&!(H&&H.covered)){
+    const comp=A.freq==='often'&&A.who!=='hobby'&&!has('special','event')&&!J.r.coord.length&&!(ndid&&night)&&!(night&&bvlos);
+    const routeNeed=[]; if(J.r.coord.includes('airport'))routeNeed.push('空港周辺'); if(J.r.coord.includes('alt'))routeNeed.push('150m以上'); if(ndid&&night)routeNeed.push('DIDでの夜間'); if(night&&bvlos)routeNeed.push('夜間の目視外'); if(A.who==='hobby')routeNeed.push('趣味目的');
+    if(!H||H.manualNG) t.push(T('飛行マニュアルと安全の体制を決める',{when:'1か月前',
+      do:['多くの人は「航空局標準マニュアル」を選ぶ（場所を決めない申請は②、場所を決めた申請は①）','選んだマニュアルを読み、守れるか確認（例：風速5m/s以上は飛ばさない、雨・霧の日は飛ばさない、第三者が入ったら中止）', (ndid&&(night||bvlos))?'標準マニュアル②では、DID上空の夜間飛行はできない。DID上空の目視外飛行も原則できない（業務上やむを得ない場合だけ、操縦者と常に連絡がとれる補助者を必ず置く）。この飛ばし方をするなら、場所を特定して、その条件での許可申請が必要':'',A.dist==='near'?'30m未満やDID上空では、プロペラガードを付ける。付けられないときは、補助者を必ず置く':'',(night&&bvlos)?'標準マニュアル②では、夜間の目視外飛行はできない':'',has('special','event')?'標準マニュアルでは催し場所の上空は飛ばせない。独自の飛行マニュアルを用意して申請する':'','補助者の人数と役割（見張り・声かけ・立入管理）、コーン・看板・消火器を用意'].filter(Boolean),
+      why:'許可・承認の条件になるため。選んだマニュアルを守らないと、許可があっても違反になる。',
+      day:'数日',ng:['選んだマニュアルの決まりは、許可の条件そのもの','申請のときに選んだだけで中身を読んでいない、がいちばん多い失敗']}));
+    const hold=[];
+    if(H){ if(H.missing.length)hold.push('許可書にない飛ばし方（'+H.missing.join('・')+'）→ 変更申請か、新しい申請');
+      if(H.route.length)hold.push('包括では飛ばせない条件（'+H.route.join('・')+'）→ 経路を決めた申請を別に出す');
+      if(H.manualNG)hold.push('選んだマニュアルではできない（'+H.manualNG.join('、')+'）→ 場所を特定して、その条件での許可申請が必要（または飛ばし方を変える）');
+      if(H.expired)hold.push('許可の期限切れ → 新しく申請');
+      if(H.soon)hold.push('期限が近い → 更新の申請（開庁日10日前まで）');
+      if(H.mismatch)hold.push('機体・操縦者が許可書にない → 追加の変更申請');
+      if(H.unknownAny)hold.push('許可書の中身がわからない項目がある → まず許可書を確かめて、足りなければ申請');}
+    t.push(T(H?'DIPS 2.0で追加・変更（更新）の申請をする':'DIPS 2.0で許可・承認を申請する',{when:'3〜4週間前（しめきりは開庁日10日前）',
+      do:[H?'今の許可だけでは足りない理由：'+(hold.join('／')||'確認が必要'):'申請が必要な理由：'+J.r.need.join('・'),'申請書に目的・日時（期間）・場所（経路）・高度・機体・操縦者の経歴・マニュアル・安全対策・保険を書く', H?'':(comp?'何度も飛ばすなら「包括申請」（原則3か月、最長1年）が便利':'今回は「個別申請」（日時・場所を決めて申請）'), routeNeed.length?'次の条件があるので、経路を決めた申請が必要：'+routeNeed.join('・'):'', has('special','event')?'催し場所の上空は、日時と経路まで決めた申請が必要':'','提出後、国から補正（直してほしい点）の指示が来たら、すぐ直して再提出 → 許可書をDIPSで確認・保存','補正を減らすコツ：飛行経路の地図・高度・補助者の配置・立入管理の方法を具体的に書く。DIPSの入力例どおりに書く'].filter(Boolean),
+      why:'国が「この人・機体・体制なら安全に飛ばせる」と確認するため。',
+      day:'しめきりは飛ばす日の開庁日10日前（土日祝を除く）。内容が簡単な申請なら早めに許可が出ることもあるが、補正（直してほしい点の指示）が入ると、そのやり取りで飛行日に間に合わないことがある。3〜4週間前の申請がおすすめ',
+      ng:['「10日前」は土日祝を数えない。連休前は実質3週間以上前','許可書の条件を守らないと違反','機体・操縦者・期間が変わったら変更申請']}));
+  }
+
+  // 管理者
+  const rows=[];
+  if(has('place','park'))rows.push('公園：市町村の公園の担当課（条例で禁止の公園が多い）');
+  if(has('place','river'))rows.push('河川敷：河川事務所・市町村');
+  if(has('place','sea'))rows.push('海岸・港：県・市町村、港の管理者、海上保安部（港の中は手続きが必要なことがある）');
+  if(has('place','nature'))rows.push('国立公園・観光地：環境省の事務所・県・施設の管理者（撮影の届け出が必要なことがある）');
+  if(has('place','road'))rows.push('道路：上を通過するだけなら原則手続き不要。道路の上で離着陸したり、人や機材を置いて交通に影響するときは警察署に相談（道路使用許可）');
+  if(has('place','other'))rows.push('他人の土地・施設：持ち主・管理者の許可（公民館・学校などは書面の使用許可が多い）');
+  rows.push('離着陸する場所と、飛ぶ下の土地の持ち主・管理者の了解');
+  rows.push('その市町村の条例');
+  t.push(T('土地の持ち主・管理者・条例を確認する',{when:'1か月前〜',
+    do:rows.concat(A.who!=='practice'?['撮影するなら、映る人の顔・家・車のナンバーなどプライバシーに配慮（総務省のガイドライン）']:[]),
+    why:'航空法の許可は「空の安全」の許可で、土地を使う許可ではないため。トラブルの多くはここで起きる。',
+    day:'相談は1〜3週間、書面の使用許可は1か月かかることも',
+    ng:['「国の許可を取ったからどこでも飛ばせる」は誤り','口頭のOKでも、だれに・いつ聞いたかメモしておく','近所の人への一声で苦情や通報がぐっと減る']}));
+
+  if(over) t.push(T('前日までの準備',{when:'前日まで',
+    do:['賠償責任保険を確認（法律の義務ではないが強くすすめられている）', cat2?'飛行計画の通報（DIPS 2.0）：特定飛行なので義務。同じ時間・場所の他の飛行計画がないかも確認':'飛行計画の通報（DIPS 2.0）：今回は義務ではないが推奨','天気・風・日の出日の入りの予報を確認','バッテリーの充電、機体・アプリの更新、プロペラの傷の確認', cat2?'補助者と打合せ（役割・立ち位置・中止の合図）':'' ,'持ち物：'+(cat2?'許可書、':'')+'飛行日誌、保険の証券、消火器、救急箱、予備のプロペラ'].filter(Boolean),
+    why:'当日あわてないため。通報はほかのドローンや有人機とぶつからないようにするため。',
+    day:'前日〜数日前',ng: cat2?['特定飛行で通報しないと30万円以下の罰金','通報した計画どおりに飛ぶ。変わったら通報もやり直す']:['アプリの更新は当日の現場でやらない']}));
+  else t.push(T('前日までの準備',{when:'前日まで',
+    do:['天気・風の予報を確認','バッテリーの充電、アプリの更新','飛ばす場所のルール・管理者の了解を再確認'],
+    why:'当日あわてないため。',day:'前日',ng:['100g未満は風に流されやすい。風の弱い日を選ぶ']}));
+
+  t.push(T('当日',{when:'当日',
+    do:['緊急用務空域が指定されていないか確認','現場の確認：人・車・電線・木・鳥・金属の建物（コンパスが狂う）','風の確認'+(cat2?'（標準マニュアルでは5m/s以上は飛ばさない）':'（強い風の日は無理をしない）'),'飛行前点検：機体・プロペラ・バッテリー・送信機・コンパス・GPS'+(over?'・リモートID':''), cat2?'立入管理：飛行経路の下と離着陸場所に第三者が入らないよう、コーン・看板・補助者で区切る':'人が近づいたらすぐ止める・離れる','低い高さで動作確認してから本番','着陸後に飛行後点検'],
+    why:'事故は当日の小さな変化から起きるため。',day:'準備30分〜1時間',
+    ng:['お酒や薬の影響があるときは飛ばさない（法律で禁止）', cat2?'許可書・飛行日誌はその場で見せられるように持っていく':'','「せっかく来たから」で無理しない。中止も立派な判断'].filter(Boolean)}));
+
+  if(over) t.push(T('飛んだあと：飛行日誌',{when:'当日中',
+    do:['飛行記録・日常点検記録（飛ばすたび）、点検整備記録（整備のたび）を書く','ヒヤリとしたことも記録して次の対策に'],
+    why:'機体の状態と自分の経験の記録。許可の更新や国家資格の受験にも役立つ。',
+    day:'当日中',ng: cat2?['特定飛行で日誌を書かない・うそを書くと10万円以下の罰金','日誌は機体が登録されている間ずっと続ける']:['今回は義務ではないが、書くことがすすめられている']}));
+
+  return t;
+}
+
+/* ---------- タイムライン ---------- */
+function timeline(J){
+  const has=(k,v)=>(A[k]||[]).includes(v);
+  const rows=[]; const over=A.weight!=='under'; const cat2=J.kind==='cat2';
+  // [いつ(日付なし), 予定日から何日前(数字) or 'biz10' or 'now', やること, 大事か]
+  if(over&&A.reg==='old') rows.push(['いますぐ','now','機体登録の更新を確認',true]);
+  if(cat2&&A.train==='no') rows.push(['2か月前まで',60,'10時間以上の練習を始めて、記録をつける']);
+  if(over&&(A.reg==='none'||A.reg===undefined)) rows.push(['1か月半前まで',45,'機体登録（届くまで数日〜1週間）']);
+  if(J.r.coord.length) rows.push(['1か月半前まで',45,'空港事務所などに相談を始める']);
+  const H=J.h;
+  if(cat2&&H&&H.unknownAny) rows.push(['いますぐ','now','DIPS 2.0で、持っている許可書の中身を確かめる',true]);
+  rows.push(['1か月前まで',30,'場所を地図で確認し、土地の管理者に相談']);
+  if(cat2&&!(H&&H.covered)){rows.push(['4週間前まで',28,(H?'追加・変更（更新）の申請をする':'許可・承認を申請する')+'（おすすめ。補正が入っても間に合う）']);
+    rows.push(['開庁日10日前まで','biz10','申請のしめきり（土日祝・年末年始は数えない）',true])}
+  if(cat2) rows.push(['2週間前まで',14,'補助者を決めて、役割と中止の合図を伝える'+(A.helper==='yes'?'':'（いないなら区画で立入管理する準備）'),A.helper!=='yes']);
+  if(cat2&&H&&A.pskill==='no') rows.push(['2週間前まで',14,'許可のいらない場所で操縦練習をして、腕を取りもどす']);
+  if(cat2&&H&&H.covered) rows.push(['2週間前まで',14,'許可書の期間・飛ばし方・機体・操縦者・マニュアルを、今回の飛行と照らし合わせる']);
+  if(has('place','juyo')) rows.push(['2日前（48時間前）まで',2,'重要施設の周辺：警察署へ通報',true]);
+  rows.push(['前日まで',1, over?(cat2?'飛行計画の通報（義務）、保険・天気・充電の確認':'飛行計画の通報（推奨）、保険・天気・充電の確認'):'天気・充電の確認']);
+  rows.push(['当日',0,'緊急用務空域・現場・点検の確認、'+(cat2?'立入管理をして':'')+'飛行'+(over?'、飛行日誌':'')]);
+  return rows;
+}
+/* 祝日（2026年11月〜2027年12月）と年末年始の閉庁日 */
+const HOL=new Set(['2026-11-03','2026-11-23','2027-01-01','2027-01-11','2027-02-11','2027-02-23','2027-03-22','2027-04-29','2027-05-03','2027-05-04','2027-05-05','2027-07-19','2027-08-11','2027-09-20','2027-09-23','2027-10-11','2027-11-03','2027-11-23']);
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function isOpen(d){const w=d.getDay(),m=d.getMonth()+1,dd=d.getDate();if(w===0||w===6)return false;if(HOL.has(ymd(d)))return false;if((m===12&&dd>=29)||(m===1&&dd<=3))return false;return true}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function biz10(f){let d=new Date(f),c=0;while(c<10){d=addDays(d,-1);if(isOpen(d))c++}return d}
+const WD='日月火水木金土';
+function fmt(d){return (d.getMonth()+1)+'月'+d.getDate()+'日（'+WD[d.getDay()]+'）'}
+function today0(){const t=new Date();t.setHours(0,0,0,0);return t}
+function renderTimeline(rows,dateStr){
+  const f=dateStr?new Date(dateStr+'T00:00:00'):null; const t=today0();
+  return `<ol class="tl">${rows.map(([rel,off,txt,imp])=>{
+    let when=rel,sub='',cls=imp?'imp':'';
+    if(f&&off!=='now'){const d=off==='biz10'?biz10(f):addDays(f,-off);const left=Math.round((d-t)/864e5);
+      when=fmt(d)+(off===0?'':'まで');
+      if(left<0){sub=imp?'過ぎています。日程を見直しましょう':'過ぎています。いますぐ始めましょう';cls+=' late'}else if(left===0){sub='今日'}else{sub='あと'+left+'日'}
+      sub=rel+'　'+sub}
+    return `<li class="${cls}"><div class="tl-when">${when}${sub?`<small>${sub}</small>`:''}</div><div class="tl-what">${txt}</div></li>`}).join('')}</ol>`;
+}
+
+/* ---------- タイプ名 ---------- */
+function pickType(J){
+  const has=(k,v)=>(A[k]||[]).includes(v); const c2=J.kind==='cat2';
+  const T=(n,c,m)=>({name:n,catch:c,msg:m});
+  if(A.who==='buy') return T('カートに入れたまま3日目','買う前に悩みすぎて、ドローンより先に目が疲れてきたタイプ','悩むのはいいこと。でも、まず重さが100g未満か以上かを決めると、やることが半分に減るよ。');
+  if(A.indoor==='in') return T('おうちの中のトップガン','壁と天井に囲まれて、腕だけはぐんぐん上がるタイプ','屋内は手続きなしで練習し放題。ここで10時間ためておくと、外に出るとき強いぞ。');
+  if(J.r.ng.length) return T('その先、通行止めです族','行きたい場所が、国がいちばん守りたい場所だったタイプ','重要施設のまわり1,000mは、許可があっても原則だめ。まずは場所を変えるのがいちばん早い。');
+  if(J.kind==='model') return T('軽さは正義！手のひらパイロット','100g未満の身軽さで、手続きをひらりとかわすタイプ','登録も許可もいらないけど、空港のそば・重要施設のそば・公園の条例は100g未満でも守ってね。');
+  const H=J.h;
+  if(H&&c2){
+    if(H.expired) return T('許可書の賞味期限、切れてます','冷蔵庫の奥で見つけた牛乳のように、気づいたら期限が過ぎていたタイプ','期限が切れた許可では飛ばせない。新しく申請しなおそう。次からは期限の1か月前にカレンダーへ！');
+    if(H.itemsUnknown||A.pkind==='unknown'||A.pmanual==='unknown') return T('許可書は引き出しの奥で熟成中','取ったことは覚えている、でも中身は覚えていないタイプ','まずDIPSで許可書を開いてみよう。何が許可されているかわからないまま飛ばすのが、いちばんのやらかしだよ。');
+    if(H.manualNG) return T('マニュアル、表紙だけ読んだ人','標準マニュアル②を選んだけど、中の決まりとやりたい飛び方がぶつかっているタイプ','マニュアルには、できない飛び方も書いてある。選んだら中身まで読もう。足りない分は申請しなおしだ。');
+    if(H.mismatch) return T('新しい相棒、許可書に載ってない問題','機体や仲間は増えたのに、許可書だけ昔のままのタイプ','許可書にない機体・操縦者では飛ばせない。変更申請で追加しよう。');
+    if(!H.covered) return T('包括の外に片足はみ出してる人','持っている許可と、やりたい飛び方が少しずつずれているタイプ','包括があっても、許可書に書いてない飛び方や経路の申請が必要な飛び方はできない。足りない分だけ申請しよう。');
+    return T('許可書を額に入れて飾りたい優等生','許可書の中身まで、ちゃんと覚えているタイプ','申請はいらないけど、許可書の条件どおりに飛ばすまでが許可。通報と日誌は毎回ね。');
+  }
+  if(A.who==='national') return T('資格はあるのに書類と目が合う人','国家資格を持っているのに、まだ申請の画面を開いているタイプ','機体認証と資格の限定しだいで、省ける申請がある。持っている紙を一度ならべてみよう。');
+  if(A.who==='comeback') return T('ブランク明けの元・優等生','修了証は引き出しの奥、登録の期限はどこかへ行ったタイプ','久しぶりなら、まず登録の期限とルールの変更を確認。腕は屋内で取りもどそう。');
+  if(c2&&J.r.need.every(x=>x.includes('要確認'))) return T('地図はまだ見てない派','やる気は満タン、でもDIDの地図はまだ開いていないタイプ','まずは地図でDIDと空港・重要施設を確認。それだけで、許可がいるかどうかがはっきりするよ。');
+  if(c2&&A.helper==='no'&&((A.sight==='no'&&has('place','did'))||has('special','event'))) return T('ワンオペ隊長（補助者募集中）','操縦も見張りも声かけも、ぜんぶひとりでやろうとしているタイプ','DID上空の目視外や催しの上空は、補助者がいてこそ。頼むときは、役割と中止の合図まで伝えておこう。');
+  if(c2&&A.lead==='soon') return T('来週飛ばしたい見切り発車さん','やる気はロケット級、申請はまだ発射台のタイプ','気持ちはわかる！でも申請は開庁日10日前がしめきり。補正が入ると間に合わないこともあるよ。');
+  if(J.r.coord.length) return T('空の先客にごあいさつ係','飛行機やヘリと同じ空に、おじゃましようとしているタイプ','空港のまわりや150m以上は、申請の前に空港事務所との相談が必要。早めに電話してみよう。');
+  if(c2&&has('special','event')) return T('お祭りの真上で撮りたい祭り好き','人が集まるほどテンションが上がるタイプ','催し場所の上空は、日時と経路まで決めた申請が必要。主催者との打合せも忘れずに。');
+  if(c2&&A.time==='night') return T('夜景に恋した申請ルーキー','きれいな夜景のためなら、書類も夜ふかしするタイプ','夜はライトがあっても夜間飛行。昼のうちに経路を下見しておくと安心だよ。');
+  if(c2&&A.who==='work') return T('包括申請に片足つっこんだ仕事人','依頼を受けた瞬間から、頭の中で地図を広げているタイプ','何度も飛ばすなら包括申請が便利。ただ、経路を決めた申請が必要な飛ばし方もあるから要注意。');
+  if(c2&&has('place','did')&&J.r.need.length===1) return T('ご近所がDIDだった件','家の前で飛ばしたいだけなのに、地図に色がついていたタイプ','自分の庭でもDIDなら許可が必要。立入管理と近所へのひと声で、ぐっと飛ばしやすくなるよ。');
+  if(c2) return T('申請デビュー目前の人','もうすぐ「許可書」という名の勲章を手に入れるタイプ','はじめての申請は補正が来て当たり前。落ちこまずに直して出せばOK！');
+  if(A.who==='practice') return T('許可いらずの原っぱ番長','ルールの内側で、のびのび腕をみがくタイプ','手続きがいらない場所でも、人や車から30m、目で見える範囲を守ってね。');
+  return T('晴れの日だけのお散歩カメラマン','許可はいらない、でも油断もしない、ちょうどいいタイプ','許可はいらなくても、場所の管理者と条例の確認だけは忘れずに。');
+}
+
+/* ---------- おすすめ（広告） ---------- */
+const PROD={
+ book1:['一等・二等 無人航空機操縦士 国家資格対応テキスト','ルールを本でしっかり確認したい人に','https://link.amazon/B0ct8fdly'],
+ intro:['ドローン超入門（青春新書）','買う前に全体をつかみたい人に','https://link.amazon/B07cpMVyx'],
+ hs210:['Holy Stone HS210 ミニドローン（100g未満）','室内練習の1台目に','https://link.amazon/B003Cnr8V'],
+ hs420:['Holy Stone HS420 ミニドローン（100g未満・カメラ付き）','練習しながら撮影も試せる','https://link.amazon/B08V9Txw1'],
+ hover:['HOVERAir X1 Smart（100g未満）','手のひらサイズで自動追尾の空撮','https://link.amazon/B0gtr9woR'],
+ lito1:['DJI Lito 1 バッテリー2個コンボ','リモートID内蔵の入門空撮機','https://link.amazon/B04z0qfQK'],
+ mini5:['DJI Mini 5 Pro Fly Moreコンボ','小型でも本格的に撮りたい人に','https://link.amazon/B0ahM0VQm'],
+ litoX1:['DJI Lito X1 Fly Moreコンボ Plus','久しぶりの買いかえに','https://link.amazon/B0iEUOTvH'],
+ mavic4:['DJI Mavic 4 Pro Fly Moreコンボ','仕事で画質にこだわるなら','https://link.amazon/B0hufgRHh'],
+ guardLito:['DJI Lito シリーズ 360°プロペラガード','人や物の近くで飛ばすときの守り','https://link.amazon/B07O2rmgz'],
+ guardMini:['DJI Mini 5 Pro 360°プロペラガード','DIDや30m未満で安心を足す','https://link.amazon/B01gmRQM2'],
+ wind:['FieldNew ハンディ風速計','風速5m/sの判断を数字で','https://link.amazon/B0bSv9xjQ'],
+ pad50:['CYNOVA ランディングパッド','草や砂を巻き上げずに離着陸','https://link.amazon/B042r4ZNw'],
+ cone:['GUARDLEAD 折りたたみカラーコーン（4個）','立入管理の区画を見える化','https://link.amazon/B0c70U1Zi'],
+ sign:['COLTE ドローン飛行中 サインボード','まわりの人に飛行中を知らせる','https://link.amazon/B0iS4PEcZ'],
+ sd256:['SanDisk Extreme PRO microSD 256GB','4K動画もたっぷり保存','https://link.amazon/B0avdqkZl'],
+ hood:['DJI RC 2用 送信機サンフード','明るい日や夜景でも画面が見やすい','https://link.amazon/B0iEL5LA9'],
+ nd:['DJI Mini 5 Pro NDフィルターセット','晴れの日の映像をなめらかに','https://link.amazon/B0abmo6WQ'],
+ case:['Lykus Titan 防水ハードケース（Mini 5 Pro用）','移動や雨の日も機体を守る','https://link.amazon/B0hQsrx2l'],
+ strobe:['STARTRC ドローン用ストロボライト','夜間に機体の位置と向きを見やすく','https://link.amazon/B09XvsXI9'],
+ head:['Lepro 充電式LEDヘッドライト','夜の準備や点検で両手が使える','https://link.amazon/B0fD1dLun'],
+ icom:['アイコム IC-4310B 特定小電力トランシーバー','補助者との連絡に（免許不要）','https://link.amazon/B0dXjHbV3'],
+ kenwood:['ケンウッド UBZ-LU20B デミトス','小型で持ち歩きやすいトランシーバー','https://link.amazon/B03xRmacs'],
+ bino:['ケンコー 双眼鏡 Classi-air 8倍','有人機や周りの見張りに','https://link.amazon/B09aSowvc'],
+ log:['ドローンフライトログブック2026','飛行日誌を手書きでつけたい人用','https://link.amazon/B02iDFYJb'],
+ battMini:['DJI Mini 5 Pro フライトバッテリー（純正）','予備があると練習も撮影も余裕','https://link.amazon/B01hwWhT0'],
+ battLito1:['DJI Lito 1 フライトバッテリー（純正）','予備があると練習も撮影も余裕','https://link.amazon/B0gcCbrBM'],
+ battLitoX1:['DJI Lito X1 フライトバッテリー（純正）','予備があると練習も撮影も余裕','https://link.amazon/B06W1yXxt'],
+ bag:['LayLax GIGA TEC リポ セーフティーバッグ','バッテリーの保管・充電時の発火対策','https://link.amazon/B05R6AvvD']
+};
+const AFF={
+ 'カートに入れたまま3日目':['intro','hs210','lito1','mini5'],
+ 'おうちの中のトップガン':['hs210','hs420','pad50'],
+ '軽さは正義！手のひらパイロット':['hover','hs420','bag'],
+ '資格はあるのに書類と目が合う人':['book1','mavic4','case'],
+ 'ブランク明けの元・優等生':['book1','litoX1','battMini','bag'],
+ '地図はまだ見てない派':['book1','wind'],
+ '来週飛ばしたい見切り発車さん':['book1','log'],
+ '空の先客にごあいさつ係':['wind','bino'],
+ 'お祭りの真上で撮りたい祭り好き':['cone','sign','icom'],
+ '夜景に恋した申請ルーキー':['strobe','head','hood'],
+ '包括申請に片足つっこんだ仕事人':['mavic4','case','icom','kenwood','cone'],
+ 'ご近所がDIDだった件':['guardMini','cone','sign'],
+ '申請デビュー目前の人':['book1','cone','icom','log'],
+ '許可いらずの原っぱ番長':['pad50','wind','guardLito','bag'],
+ '許可書の賞味期限、切れてます':['book1','log'],
+ '許可書は引き出しの奥で熟成中':['book1','log','case'],
+ 'マニュアル、表紙だけ読んだ人':['book1','guardMini','icom'],
+ '新しい相棒、許可書に載ってない問題':['guardMini','battMini','case'],
+ '包括の外に片足はみ出してる人':['book1','cone','icom'],
+ '許可書を額に入れて飾りたい優等生':['log','icom','cone','bag'],
+ 'ワンオペ隊長（補助者募集中）':['cone','sign','icom','kenwood'],
+ '晴れの日だけのお散歩カメラマン':['sd256','nd','hood','case','battMini','battLito1','battLitoX1']
+};
+function affHtml(name){
+ const ids=AFF[name]; if(!ids||!ids.length) return '';
+ return `<section class="card"><div class="aff-head"><h2>先輩のおすすめ</h2><span class="adtag">広告</span></div>
+  <p class="small">このタイプの人がそろえておくと安心なものです。</p>
+  <ul class="aff">${ids.map(k=>{const [n,w,u]=PROD[k];return `<li><div><b>${n}</b><span>${w}</span></div><a href="${u}" target="_blank" rel="sponsored noopener">Amazonで見る</a></li>`}).join('')}</ul></section>`;
+}
+
+/* ---------- 結果 ---------- */
+const LABEL={};Q.forEach(q=>{LABEL[q.id]={};q.opts.forEach(([v,l])=>LABEL[q.id][v]=l)});
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function syncPro(){
+  if(A.level!=='pro'||!A.tokutei)return;
+  const t=A.tokutei;
+  A.high=t.includes('alt')?'yes':'no'; A.time=t.includes('night')?'night':'day';
+  A.sight=t.includes('bvlos')?'no':'yes'; A.dist=t.includes('near')?'near':'far';
+  const sp=['event','drop','danger'].filter(x=>t.includes(x)); A.special=sp.length?sp:['none'];
+}
+function renderResult(){
+  const _d=new Date();const DIAG=_d.getFullYear()+"年"+(_d.getMonth()+1)+"月"+_d.getDate()+"日";
+  syncPro();
+  const J=judge(); const tasks=buildTasks(J); const TY=pickType(J);
+  let v='';
+  const ngChip=J.r.ng.map(x=>`<span class="chip c-red">${x}</span>`).join('');
+  if(J.kind==='indoor') v=`<div class="verdict v-ok"><h2>屋内なので、航空法の手続きはいりません</h2><p>施設のルールを守って、操縦に慣れることから始めましょう。</p></div>`;
+  else if(J.kind==='model') v=`<div class="verdict v-ok"><h2>100g未満の機体：登録や許可・承認はいりません</h2><p>ただし、空港の周辺・150m以上・重要施設の周辺・条例で禁止の場所などのルールは守る必要があります。</p>${ngChip?`<div class="reasons">${ngChip}</div>`:''}</div>`;
+  else if(J.kind==='cat1') v=`<div class="verdict v-ok"><h2>許可・承認はいりません（カテゴリーⅠ）</h2><p>機体登録と、場所の管理者・条例の確認をして飛ばせます。飛行計画の通報と飛行日誌はすすめられています。</p>${ngChip?`<div class="reasons">${ngChip}</div>`:''}</div>`;
+  else if(J.h&&J.h.covered) v=`<div class="verdict v-ok"><h2>今回の飛び方は、お持ちの許可・承認の範囲内です</h2><p>新しい申請はいりません。ただし許可書の条件とマニュアルどおりに飛ばすことが前提です。飛行計画の通報と飛行日誌は毎回必要です。</p><div class="reasons">${J.r.need.map(x=>`<span class="chip c-gold">${x}</span>`).join('')}</div></div>`;
+  else if(J.h) v=`<div class="verdict v-need"><h2>${J.h.unknownAny&&!J.h.missing.length&&!J.h.route.length&&!J.h.manualNG&&!J.h.expired&&!J.h.mismatch?'お持ちの許可で足りるか、確認が必要です':'お持ちの許可だけでは足りません'}</h2><p>今回の飛び方（${J.r.need.join('・')}）と、お持ちの許可を照らし合わせた結果です。${J.h.unknownAny?'わからない項目は、許可書を確かめてから判断してください。':''}足りない分は、追加・変更（更新）の申請が必要です。</p><div class="reasons">${J.h.missing.map(x=>`<span class="chip c-red">許可書にない：${x}</span>`).join('')}${J.h.route.map(x=>`<span class="chip c-red">包括では不可：${x}</span>`).join('')}${J.h.manualNG?J.h.manualNG.map(x=>`<span class="chip c-red">${x}</span>`).join(''):''}${J.h.expired?'<span class="chip c-red">期限切れ</span>':''}${J.h.mismatch?'<span class="chip c-red">機体・操縦者が許可書にない</span>':''}${J.h.unknownAny?'<span class="chip c-gold">許可書の確認が必要</span>':''}${ngChip}</div></div>`;
+  else v=`<div class="verdict v-need"><h2>${J.r.need.every(x=>x.includes('要確認'))?'許可・承認が必要かもしれません（確認が必要）':'許可・承認が必要です（カテゴリーⅡ・特定飛行）'}</h2><p>${J.r.need.every(x=>x.includes('要確認'))?'次の点がはっきりしないため、安全側で判定しています。確かめた結果によっては許可・承認がいりません。':'次の理由で、国土交通省の許可・承認が必要です。飛行経路の下に第三者を入れない（立入管理）で飛ばします。'}</p><div class="reasons">${J.r.need.map(x=>`<span class="chip c-gold">${x}</span>`).join('')}${ngChip}</div></div>`;
+
+  const alerts=[];
+  const LINKS='<a href="https://www.mlit.go.jp/koku/koku_fr10_000041.html" target="_blank" rel="noopener">国土交通省「飛行禁止空域」（地図の案内）</a>・<a href="https://www.npa.go.jp/bureau/security/kogatamujinki/index.html" target="_blank" rel="noopener">警察庁「小型無人機等飛行禁止法」（重要施設の一覧）</a>';
+  if((A.place||[]).includes('dontknow')) alerts.push(`<div class="alert gold"><b>わからない項目があるので、安全側で「許可が必要かもしれない」と判定しています。</b>DID・空港の周辺・重要施設の周辺に当たるか、地図で確かめてから、もう一度診断してください。${LINKS}</div>`);
+  if((A.place||[]).includes('none')) alerts.push(`<div class="alert gold"><b>「どれにも当てはまらない」を選んだ方へ。</b>DIDかどうか、近くに空港や重要施設（自衛隊・原発など。周囲1,000m）がないかは、思いこみで判断せず地図で確かめてください。${LINKS}</div>`);
+  if(J.r.ng.length) alerts.push(`<div class="alert"><b>重要施設の周辺は原則飛べません。</b>施設管理者などの同意と、48時間前までの警察署への通報が必要です（下の手順を参照）。</div>`);
+  const needApply=J.kind==='cat2'&&!(J.h&&J.h.covered);
+  if(needApply&&A.lead==='soon') alerts.push(`<div class="alert"><b>申請が間に合わない可能性があります。</b>許可・承認は飛ばす日の開庁日10日前（土日祝を除く）までに申請が必要です。簡単な申請なら早めに許可が出ることもありますが、補正の指示が入ると、やり取りの間に飛行日を過ぎてしまうことがあります。日程を見直すか、許可のいらない飛ばし方にできないか考えましょう。</div>`);
+  if(needApply&&A.lead==='2w') alerts.push(`<div class="alert gold"><b>日程に余裕がありません。</b>補正の指示が入っても間に合うよう、今日から申請の準備を始めましょう。</div>`);
+  if(J.kind==='cat2'&&A.train==='no'&&(A.lead==='soon'||A.lead==='2w')) alerts.push(`<div class="alert gold"><b>練習の記録が足りないと申請できません。</b>まず10時間以上の練習を優先しましょう。</div>`);
+  if(A.dist==='unknown') alerts.push(`<div class="alert gold"><b>30mがわからない場合は、現地で確認しましょう。</b>離陸場所のすぐ横に他人の車があるだけでも30m未満になります。近づくなら承認が必要です。</div>`);
+  if(A.weight==='unknown') alerts.push(`<div class="alert gold"><b>機体が決まっていないので、100g以上として案内しています。</b>100g未満の機体なら、登録と許可・承認はいりません。</div>`);
+  if(A.permit==='unknown') alerts.push(`<div class="alert gold"><b>許可を持っているかわからない場合は、「持っていない」として案内しています。</b>DIPS 2.0の申請の一覧で、許可書があるか確かめてください。あれば、もう一度診断すると申請を省けるか確認できます。</div>`);
+  if(J.h&&J.h.didBvlosOK&&J.kind==='cat2') alerts.push(`<div class="alert gold"><b>標準マニュアル②では、DID上空の目視外は原則できません。</b>業務上やむを得ない場合に限り、操縦者と常に連絡がとれる補助者を必ず置いて飛ばせます（コーンや看板の区画では代えられません）。</div>`);
+  if(J.h&&J.h.soon&&J.kind==='cat2') alerts.push(`<div class="alert gold"><b>許可の期限が近づいています。</b>期限内なら更新の申請ができます。しめきりは新しい申請と同じく開庁日10日前です。</div>`);
+  if(J.h&&J.h.covered&&J.kind==='cat2'&&A.pkind==='route') alerts.push(`<div class="alert gold"><b>場所（経路）や日時を決めた許可です。</b>今回の場所・日時が許可書と同じときだけ、この結果になります。違う場所・日なら、新しい申請が必要です。</div>`);
+  if(J.kind==='cat2'&&A.helper==='no'&&((A.sight==='no'&&(A.place||[]).includes('did'))||(A.special||[]).includes('event'))) alerts.push(`<div class="alert"><b>この飛び方は、補助者がいないと飛ばせません。</b>DID上空の目視外や催し場所の上空は、補助者が必要です。補助者を確保しましょう。</div>`);
+  else if(J.kind==='cat2'&&A.helper!=='yes') alerts.push(`<div class="alert gold"><b>補助者がいない場合は、区画で立入管理します。</b>飛行経路の下と離着陸場所をコーン・ロープ・看板などで区切り、第三者が入らない状態を確実に作れるか確認しましょう（下の「補助者を決める」を参照）。</div>`);
+  J.r.notes.forEach(n=>alerts.push(`<div class="alert gold"><b>注意：</b>${n}</div>`));
+
+  const tl=timeline(J);
+  const ans=Q.filter(q=>visible(q)&&A[q.id]!==undefined).map(q=>{const val=A[q.id];const t=Array.isArray(val)?val.map(x=>LABEL[q.id][x]).join('、'):LABEL[q.id][val];return `<li>${q.text}　<b>${esc(t)}</b></li>`}).join('');
+
+  app.innerHTML=`<section class="card" style="display:flex;flex-direction:column;gap:14px">
+     <span class="eyebrow">診断結果</span>
+     <p class="disclaimer">この結果は、飛行してよいことを証明するものではありません。答えた内容をもとにした目安です（診断日：${DIAG}／2026年11月時点の法令にもとづく）。</p>
+     <div class="typecard"><p class="type-pre">あなたは…</p><p class="type-name">「${TY.name}」</p><p class="type-catch">${TY.catch}</p>
+       <div class="senpai"><span class="senpai-name">じゅん先輩</span><p>${TY.msg}</p></div></div>
+     ${v}
+     ${alerts.join('')}
+   </section>
+   ${affHtml(TY.name)}
+   ${A.indoor==='out'?`<section class="card"><h2>いつまでに何をする？</h2>
+     <div class="datebox"><label for="fdate">飛ばす予定日を入れると、日付で表示します</label><input type="date" id="fdate" value="${A.fdate||''}"></div>
+     <div id="tlbox">${renderTimeline(tl,A.fdate)}</div>
+     <p class="small" style="margin-top:8px">申請のしめきりは、土日・祝日・年末年始（12月29日〜1月3日）を除いて数えています（祝日は2027年まで対応）。</p></section>`:''}
+   <section class="card"><h2>あなたのやること（順番どおり）</h2>
+     <div class="todo" style="margin-top:12px">${tasks.map((k,i)=>`<article class="task">
+       <div class="task-head"><span class="num">${i+1}</span><h3>${k.title}</h3><span class="when">${k.when}</span></div>
+       <div class="row"><div class="lab l-do">やること</div><div><ul>${k.do.map(x=>`<li>${x}</li>`).join('')}</ul></div></div>
+       <div class="row"><div class="lab l-why">何のため</div><div>${k.why}</div></div>
+       <div class="row"><div class="lab l-day">目安</div><div>${k.day}</div></div>
+       <div class="row"><div class="lab l-ng">注意</div><div><ul>${k.ng.map(x=>`<li>${x}</li>`).join('')}</ul></div></div>
+     </article>`).join('')}</div>
+   </section>
+   <section class="card"><h2>もしものとき（事故・ヒヤリ）</h2>
+     <ol style="margin-top:8px"><li>すぐ飛行をやめる</li><li>けが人の救護、119番</li><li>落ちた機体のバッテリーの発火に注意</li><li>人や物に被害があれば警察（110番）</li><li>国へ速やかに報告（DIPS 2.0の事故等報告）</li><li>保険会社へ連絡</li></ol>
+     <p class="small" style="margin-top:6px">救護をしないと重い罰則があります。けががなくても、制御不能や飛行中の発火などは報告の対象になることがあります。</p>
+   </section>
+   <section class="card"><h2>🎁 もうひとつのクリア特典</h2>
+     <p style="margin-top:8px">ゲームの中で、<b>町のドローン便利屋の依頼（サブストーリー）を全部クリア</b>すると、「<b>はじめて飛ばすまでの実務フローチャート</b>」がもらえます。機体選びから飛んだあとまでの全部を、ステップごとにまとめた完全版です。まだの人は、ゲームにもどって依頼ボード（駅前）をのぞいてみよう。</p>
+   </section>
+   <section class="card answers"><h3>あなたの回答</h3><ul style="margin-top:6px">${ans}</ul>
+     <div class="nav"><button type="button" class="btn ghost" id="back">ひとつもどる</button><button type="button" class="btn primary" id="restart">はじめからやり直す</button></div>
+   </section>`;
+  const fd=document.getElementById('fdate');if(fd)fd.addEventListener('change',()=>{A.fdate=fd.value;document.getElementById('tlbox').innerHTML=renderTimeline(tl,A.fdate)});
+  document.getElementById('restart').addEventListener('click',()=>{A={};idx=0;history=[];renderQ();window.scrollTo(0,0)});
+  document.getElementById('back').addEventListener('click',()=>{idx=history.pop();renderQ()});
+  window.scrollTo(0,0);
+}
+
+renderQ();
+})();
+</script>
